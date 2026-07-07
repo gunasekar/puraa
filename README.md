@@ -1,5 +1,7 @@
 # Puraa
 
+[![Latest release](https://img.shields.io/github/v/release/gunasekar/puraa)](https://github.com/gunasekar/puraa/releases/latest)
+
 A small, lightweight Android app that forwards incoming SMS to a private
 Telegram channel or a Discord channel as each message arrives — useful for
 mirroring alerts such as bank, UPI, and OTP messages to a client you already
