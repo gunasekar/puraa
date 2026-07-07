@@ -1,6 +1,6 @@
 # Puraa
 
-[![Latest release](https://img.shields.io/github/v/release/gunasekar/puraa)](https://github.com/gunasekar/puraa/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/gunasekar/puraa?display_name=tag&sort=semver)](https://github.com/gunasekar/puraa/releases/latest)
 
 A small, lightweight Android app that forwards incoming SMS to a private
 Telegram channel or a Discord channel as each message arrives — useful for
