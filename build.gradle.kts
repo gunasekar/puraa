@@ -1,0 +1,11 @@
+// Top-level build file.
+// Plugins are applied per module; here we just declare versions via the
+// version catalog (see gradle/libs.versions.toml).
+
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.ksp) apply false
+}

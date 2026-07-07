@@ -1,0 +1,35 @@
+# Build outputs
+build/
+.gradle/
+.kotlin/
+captures/
+*.apk
+*.aab
+
+# Local config
+local.properties
+.idea/
+*.iml
+gradle-app.setting
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets — never commit
+*.keystore
+*.jks
+keystore.properties
+# Symlinks into the private (git-crypt) dotfiles — live tokens/webhooks.
+.env
+.envrc
+
+# IDE
+.vscode/
+*.swp
+
+# Scratch — design explorations, intermediates; not part of the deliverable
+.scratch/
+
+# Release artifacts
+dist/
