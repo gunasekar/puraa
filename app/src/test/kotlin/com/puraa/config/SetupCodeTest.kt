@@ -39,7 +39,11 @@ class SetupCodeTest {
     @Test
     fun `codes without the magic header are rejected`() {
         assertNull(SetupCode.decode("bot=123:ABC\nch=-100"))
-        assertNull(SetupCode.decode("https://www.padnam.in/puraa/relay?bot=1&ch=2"))
+        // A generic scanner reads any QR — most encode a URL. decode() must
+        // treat a scanned URL as an invalid setup code, never parse it as config.
+        // (Unrelated to deep links: the app registers no VIEW intent, so no URL
+        // ever reaches it via the OS in the first place.)
+        assertNull(SetupCode.decode("https://example.com/puraa/relay?bot=1&ch=2"))
         assertNull(SetupCode.decode("PURAA-SETUP/2\nbot=123:ABC\nch=-100"))
         assertNull(SetupCode.decode(null))
         assertNull(SetupCode.decode(""))
