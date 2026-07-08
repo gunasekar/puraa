@@ -185,6 +185,11 @@ fun RelayScreen(
                 smsGranted = smsGranted,
             )
 
+            if (!smsGranted) {
+                Spacer(Modifier.height(12.dp))
+                RestrictedSmsHint(onOpenSettings = { openAppSettings(context) })
+            }
+
             Spacer(Modifier.height(20.dp))
 
             TonalButton(
@@ -323,6 +328,42 @@ private fun StatTile(
     }
 }
 
+/**
+ * Shown when SMS access isn't granted. Beyond a plain "grant permission"
+ * nudge, it spells out the Android 13+ *restricted settings* trap: a build
+ * sideloaded from a browser has its SMS toggle greyed out, and the only way
+ * through is "Allow restricted settings" from the app's own settings page —
+ * which most users never find on their own.
+ */
+@Composable
+private fun RestrictedSmsHint(onOpenSettings: () -> Unit) {
+    PuraaCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = CardTone.Alert,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            "SMS access is off — nothing will forward",
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "If the SMS toggle looks greyed out, Android is blocking it as a " +
+                "\"restricted setting\" because Puraa was installed from external " +
+                "sources. Open app settings, tap the ⋮ menu, choose \"Allow " +
+                "restricted settings,\" then turn on SMS.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(Modifier.height(12.dp))
+        SecondaryButton(
+            text = "Open app settings",
+            onClick = onOpenSettings,
+            modifier = Modifier,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        )
+    }
+}
+
 @Composable
 private fun InfoCard(
     deviceName: String,
@@ -343,7 +384,7 @@ private fun InfoCard(
         InfoRow(
             label = "SMS",
             value = if (smsGranted) "Access granted"
-            else "Access revoked — relay won't catch SMS",
+            else "Access revoked",
             valueColor = if (smsGranted) MaterialTheme.colorScheme.primary
             else MaterialTheme.colorScheme.error,
         )

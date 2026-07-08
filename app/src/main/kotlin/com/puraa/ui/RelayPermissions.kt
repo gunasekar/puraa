@@ -26,6 +26,24 @@ fun missingRelayPermissions(context: Context): List<String> =
         ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
     }
 
+/**
+ * Open this app's system "App info" page.
+ *
+ * The escape hatch when SMS access can't be granted from the in-app prompt —
+ * most notably the Android 13+ *restricted settings* block, which silently
+ * denies SMS to apps sideloaded from a browser or file manager and greys out
+ * the toggle until the user taps "Allow restricted settings" from this page.
+ */
+fun openAppSettings(context: Context) {
+    runCatching {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = "package:${context.packageName}".toUri()
+            if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }
+}
+
 /** Ask to be exempt from battery optimisation so sends stay prompt when idle. */
 fun requestBatteryExemption(context: Context) {
     val pm = ContextCompat.getSystemService(context, PowerManager::class.java) ?: return

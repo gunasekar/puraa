@@ -51,9 +51,48 @@ You'll enter the **bot token** and **channel id** in the app.
 You'll paste that **webhook URL** in the app. Your normal Discord client
 notifies you on new messages — no bot needed.
 
+### Installing the APK
+
+Grab the latest `.apk` from the [Releases](https://github.com/gunasekar/puraa/releases/latest)
+page. There are two ways to install it, and **which one you pick matters** for
+SMS permissions (see the note below).
+
+**Option A — `adb` (recommended).** Apps installed this way are not flagged as
+sideloaded, so the SMS permission works normally with no extra step. With USB
+debugging enabled on the phone:
+
+```
+adb install -r puraa-release.apk
+```
+
+**Option B — download on the phone.** Open the Releases page in the phone's
+browser, download the `.apk`, and tap it to install (you'll need to allow
+"install unknown apps" for the browser once). This is the easy path, but it
+triggers the restricted-settings block described next.
+
+#### If the SMS permission is greyed out ("Restricted setting")
+
+On **Android 13 and newer**, SMS is a *restricted setting*: when an app is
+installed from a browser or file manager (Option B), Android silently blocks
+the SMS permission. The in-app prompt does nothing, and in Settings the SMS
+toggle is greyed out with *"Restricted setting — for your security this setting
+is currently unavailable."* This is an OS security measure, not a Puraa bug.
+
+To unblock it:
+
+1. **Settings → Apps → Puraa** (App info).
+2. Tap the **⋮ menu** in the top-right corner.
+3. Tap **Allow restricted settings** and confirm with your PIN/fingerprint.
+4. Go to **Permissions → SMS → Allow** — the toggle is now grantable.
+
+If the ⋮ menu doesn't show that option yet, open Puraa and tap the SMS button
+once so the system records a blocked attempt, then return to App info — the
+entry appears afterwards. Installing via **Option A (`adb`)** avoids this whole
+step.
+
 ### On the phone to be relayed
 
-Install the APK, open it once, choose **Telegram** or **Discord**, enter the
+With the app installed (above), open it once, choose **Telegram** or **Discord**, enter the
 matching credentials above, add a device name and an optional sender whitelist
 (e.g. `HDFCBK,ICICIB,CRED`), and grant SMS access. That's it — the app never
 has to be opened again.
