@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Puraa">
-  <!-- White backing (squircle-shaped): keeps the dove white on any surface; corners stay transparent. -->
-  <rect x="0" y="0" width="1024" height="1024" rx="176" fill="#FFFFFF"/>
+  <!-- White backing (squircle-shaped): keeps the dove white on any surface; corners stay transparent.
+       Inset a touch inside the teal body so it never peeks past the squircle as a light rim on dark grounds. -->
+  <rect x="24" y="24" width="976" height="976" rx="170" fill="#FFFFFF"/>
   <!-- Dove-as-P mark, traced from the original render, filled teal. The white backing shows through as the dove. -->
   <g transform="translate(-0.488316,1023.868275) scale(0.100000,-0.100000)" fill="#047C6E" stroke="none">
     <path d="M1760 10229 c-641 -64 -1213 -456 -1534 -1050 -97 -181 -178 -435
