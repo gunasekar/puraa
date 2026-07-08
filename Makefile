@@ -15,8 +15,9 @@ DEBUG_APK   := app/build/outputs/apk/debug/app-debug.apk
 RELEASE_APK := app/build/outputs/apk/release/app-release.apk
 APK          = $(if $(filter release,$(BUILD)),$(RELEASE_APK),$(DEBUG_APK))
 
-# App version (from app/build.gradle.kts) and where release APKs are collected.
-VERSION     := $(shell sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)
+# App version — derived from the git tag, the single source of truth (matches
+# what Gradle builds). v0.2.0 → 0.2.0; off-tag builds get a descriptive suffix.
+VERSION     := $(shell git describe --tags --always 2>/dev/null | sed 's/^v//')
 DIST        := dist
 
 # Debug builds get the .debug applicationId suffix (see app/build.gradle.kts).

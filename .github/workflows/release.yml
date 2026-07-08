@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history + tags, so Gradle can derive the version
 
       - uses: actions/setup-java@v5
         with:
@@ -45,7 +47,8 @@ jobs:
       - name: Name the APK by version
         id: apk
         run: |
-          VER=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)
+          # Same source of truth as the build: the git tag (v0.2.0 → 0.2.0).
+          VER=$(git describe --tags --always | sed 's/^v//')
           cp app/build/outputs/apk/release/app-release.apk "puraa-$VER.apk"
           echo "file=puraa-$VER.apk" >> "$GITHUB_OUTPUT"
 

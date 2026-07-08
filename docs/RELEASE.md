@@ -9,8 +9,8 @@ make release        # (alias: make dist)
 ```
 
 This runs `assembleRelease` and copies the result to
-`dist/puraa-<versionName>.apk` (e.g. `dist/puraa-0.1.0-v1.apk`). `dist/` is
-gitignored.
+`dist/puraa-<version>.apk` (e.g. `dist/puraa-0.2.0.apk`, the version taken from
+the git tag — see [Versioning](#versioning)). `dist/` is gitignored.
 
 Install it on any phone by sideloading — no Developer Options or USB debugging
 needed: transfer the `.apk` (Drive/email/USB), tap it, allow the opening app to
@@ -50,7 +50,25 @@ this machine.
 
 ## Versioning
 
-Bump before each release in `app/build.gradle.kts`:
+**The git tag is the single source of truth.** There are no version numbers to
+edit in `app/build.gradle.kts` — the build derives them from git:
 
-- `versionCode` — integer, **must increase** for every build you distribute.
-- `versionName` — human string; drives the `dist/` filename.
+- `versionName` — `git describe --tags` with the leading `v` stripped. On an
+  exact tag it's clean (`v0.2.0` → `0.2.0`); an untagged commit gets a
+  descriptive suffix (`0.2.0-3-gabc123`).
+- `versionCode` — the commit count (`git rev-list --count HEAD`), so it always
+  increases.
+
+The Makefile's `dist/` filename and the CI release artifact are named from the
+same `git describe`, so tag, app version, and APK name can never drift.
+
+### Cutting a release
+
+```sh
+git tag v0.3.0      # SemVer, prefixed with v
+git push --tags
+```
+
+Pushing the tag triggers `.github/workflows/release.yml`, which builds the
+signed APK and publishes it to a GitHub Release named for the tag. To build one
+locally at the tagged commit, run `make release`.

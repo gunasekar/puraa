@@ -18,6 +18,19 @@ val keystoreProperties = Properties().apply {
 }
 val hasReleaseKeystore = keystoreProperties.isNotEmpty()
 
+// The git tag is the single source of truth for the version — there are no
+// hardcoded numbers to drift out of sync. `versionName` is the tag with its
+// leading `v` stripped (v0.2.0 → 0.2.0); a build off an untagged commit gets a
+// descriptive suffix (0.2.0-3-gabc123). `versionCode` is the commit count, so
+// it increases monotonically. Release ritual: `git tag vX.Y.Z && git push --tags`.
+fun git(vararg args: String): String? =
+    runCatching {
+        providers.exec { commandLine("git", *args) }.standardOutput.asText.get().trim()
+    }.getOrNull()?.takeIf { it.isNotEmpty() }
+
+val gitVersionName: String = (git("describe", "--tags", "--dirty", "--always") ?: "0.0.0").removePrefix("v")
+val gitVersionCode: Int = git("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
+
 android {
     namespace = "com.puraa"
     compileSdk = 35
@@ -26,8 +39,8 @@ android {
         applicationId = "com.puraa"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = gitVersionCode
+        versionName = gitVersionName
     }
 
     signingConfigs {
