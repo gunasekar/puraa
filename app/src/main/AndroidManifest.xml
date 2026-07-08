@@ -74,6 +74,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- The zxing scanner (CaptureActivity) ships locked to landscape in
+             the library's manifest. Puraa's setup QR is scanned holding the
+             phone upright, so override just the orientation to portrait;
+             tools:replace swaps that one attribute and keeps the library's
+             other settings from the merge. -->
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="portrait"
+            tools:replace="android:screenOrientation" />
+
     </application>
 
 </manifest>
