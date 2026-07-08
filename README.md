@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://gunasekar.github.io/puraa/"><b>Website&nbsp;↗</b></a>
+  <a href="https://gunasekar.github.io/puraa/"><b>Setup&nbsp;QR&nbsp;↗</b></a>
   &nbsp;·&nbsp;
   <a href="https://github.com/gunasekar/puraa/releases/latest">Download the APK</a>
 </p>
