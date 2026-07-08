@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -154,7 +152,8 @@ fun RelaySetupScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.Top,
         ) {
-            OutlinedButton(
+            SecondaryButton(
+                text = "Scan setup QR code",
                 onClick = {
                     scanLauncher.launch(
                         ScanOptions().apply {
@@ -165,10 +164,7 @@ fun RelaySetupScreen(
                         },
                     )
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Scan setup QR code")
-            }
+            )
 
             Spacer(Modifier.height(20.dp))
 
@@ -195,8 +191,8 @@ fun RelaySetupScreen(
                         onClick = { destination = dest; error = null },
                         shape = SegmentedButtonDefaults.itemShape(index, Destination.entries.size),
                         colors = SegmentedButtonDefaults.colors(
-                            activeContainerColor = MaterialTheme.colorScheme.primary,
-                            activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                            activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                             activeBorderColor = MaterialTheme.colorScheme.primary,
                         ),
                     ) {
@@ -261,7 +257,8 @@ fun RelaySetupScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            Button(
+            PrimaryButton(
+                text = "Save and start relay",
                 onClick = {
                     error = validate(destination, deviceName, token, channelIdText, webhook)
                     if (error == null) {
@@ -273,10 +270,7 @@ fun RelaySetupScreen(
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Save and start relay")
-            }
+            )
             Spacer(Modifier.height(12.dp))
             Text(
                 text = "Puraa reads incoming SMS directly as they arrive and " +

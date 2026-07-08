@@ -5,10 +5,22 @@ import androidx.compose.ui.graphics.Color
 // Brand accent — teal. A bright tone with dark text for the dark theme,
 // a deeper saturated tone with white text for light, so it stays a
 // confident accent on either ground.
+//
+// The SATURATED accent is reserved for the one primary action per screen
+// (the filled "Save" button) and true selection. Everything else that wants
+// to feel "teal" — an emphasised stat, a picked toggle segment — uses the
+// muted *container* tone below, so the loud fill only ever means "the action".
 val AccentDark = Color(0xFF45D6C0)
 val OnAccentDark = Color(0xFF04211D)
 val AccentLight = Color(0xFF0C7D6C)
 val OnAccentLight = Color(0xFFFFFFFF)
+
+// Tonal accent — a soft, low-chroma teal that sits between surface and the
+// saturated accent. Used for accent emphasis that is NOT the primary action.
+val AccentContainerDark = Color(0xFF173B34)
+val OnAccentContainerDark = Color(0xFF8FEADA)
+val AccentContainerLight = Color(0xFFC7EAE2)
+val OnAccentContainerLight = Color(0xFF083F37)
 
 // Dark theme — near-black with a faint cool bias toward the teal accent.
 val DarkBackground = Color(0xFF0B0E0D)

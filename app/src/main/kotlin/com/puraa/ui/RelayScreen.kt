@@ -1,6 +1,5 @@
 package com.puraa.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,18 +10,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,8 +51,6 @@ import androidx.core.content.ContextCompat
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import com.google.zxing.BarcodeFormat
@@ -193,27 +187,22 @@ fun RelayScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            OutlinedButton(
+            TonalButton(
+                text = "Push last 15 minutes",
                 onClick = {
                     val granted = ContextCompat.checkSelfPermission(
                         context, Manifest.permission.READ_SMS,
                     ) == PackageManager.PERMISSION_GRANTED
                     if (granted) doPush() else readSmsLauncher.launch(Manifest.permission.READ_SMS)
                 },
-                modifier = Modifier.fillMaxWidth(),
-                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary,
-                ),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_up),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Push last 15 minutes")
-            }
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_up),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+            )
             Text(
                 text = "Forwards every SMS from the last 15 minutes, ignoring the filter.",
                 style = MaterialTheme.typography.bodySmall,
@@ -284,7 +273,6 @@ fun RelayScreen(
         }
         AlertDialog(
             onDismissRequest = { showQr = false },
-            confirmButton = { TextButton(onClick = { showQr = false }) { Text("Done") } },
             title = { Text("Share this setup") },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -307,6 +295,7 @@ fun RelayScreen(
                     }
                 }
             },
+            confirmButton = { TextButton(onClick = { showQr = false }) { Text("Done") } },
         )
     }
 }
@@ -318,23 +307,19 @@ private fun StatTile(
     modifier: Modifier = Modifier,
     accent: Boolean = false,
 ) {
-    val container = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    val content = if (accent) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val content = if (accent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     val labelColor = if (accent) {
-        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
-    Card(
+    PuraaCard(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        tone = if (accent) CardTone.Accent else CardTone.Neutral,
+        contentPadding = PaddingValues(20.dp),
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(value, style = MaterialTheme.typography.titleLarge, color = content)
-            Text(label, style = MaterialTheme.typography.bodyMedium, color = labelColor)
-        }
+        Text(value, style = MaterialTheme.typography.titleLarge, color = content)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = labelColor)
     }
 }
 
@@ -346,32 +331,22 @@ private fun InfoCard(
     whitelistSummary: String,
     smsGranted: Boolean,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            InfoRow("Device", deviceName)
-            Spacer(Modifier.height(8.dp))
-            InfoRow("To", destination)
-            Spacer(Modifier.height(8.dp))
-            InfoRow("Target", target)
-            Spacer(Modifier.height(8.dp))
-            InfoRow("Filter", whitelistSummary)
-            Spacer(Modifier.height(8.dp))
-            InfoRow(
-                label = "SMS",
-                value = if (smsGranted) "Access granted"
-                else "Access revoked — relay won't catch SMS",
-                valueColor = if (smsGranted) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.error,
-            )
-        }
+    PuraaCard(modifier = Modifier.fillMaxWidth()) {
+        InfoRow("Device", deviceName)
+        Spacer(Modifier.height(8.dp))
+        InfoRow("To", destination)
+        Spacer(Modifier.height(8.dp))
+        InfoRow("Target", target)
+        Spacer(Modifier.height(8.dp))
+        InfoRow("Filter", whitelistSummary)
+        Spacer(Modifier.height(8.dp))
+        InfoRow(
+            label = "SMS",
+            value = if (smsGranted) "Access granted"
+            else "Access revoked — relay won't catch SMS",
+            valueColor = if (smsGranted) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.error,
+        )
     }
 }
 
