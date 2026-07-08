@@ -3,17 +3,13 @@ package com.puraa.ui
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -35,13 +31,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import android.os.Build
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
-import com.puraa.R
 import com.puraa.config.ConfigStore
 import com.puraa.config.Destination
 import com.puraa.config.SetupCode
@@ -127,17 +121,7 @@ fun RelaySetupScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_logo),
-                            contentDescription = "Puraa",
-                            modifier = Modifier.size(34.dp),
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        StatusPill(active = false)
-                    }
-                },
+                title = { PuraaWordmark() },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
@@ -182,7 +166,7 @@ fun RelaySetupScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            Text("Forward to", style = MaterialTheme.typography.titleSmall)
+            Eyebrow("Forward to")
             Spacer(Modifier.height(8.dp))
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 Destination.entries.forEachIndexed { index, dest ->

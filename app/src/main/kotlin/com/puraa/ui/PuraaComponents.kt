@@ -1,12 +1,15 @@
 package com.puraa.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -20,7 +23,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.puraa.R
+import com.puraa.ui.theme.Bricolage
+import com.puraa.ui.theme.PlexMono
 
 /**
  * Puraa's shared UI vocabulary.
@@ -30,6 +44,56 @@ import androidx.compose.ui.unit.dp
  * across screens. Restyle the app by editing this file — never re-declare a
  * shape or border at a call site.
  */
+
+/**
+ * The Puraa lockup: dove mark + "Puraa" wordmark with the teal accent dot,
+ * matching the website. Use it in top bars instead of the bare logo. The mark
+ * is decorative here — the text carries the accessible name.
+ */
+@Composable
+fun PuraaWordmark(
+    modifier: Modifier = Modifier,
+    logoSize: Dp = 28.dp,
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Image(
+            painter = painterResource(R.drawable.ic_logo),
+            contentDescription = null,
+            modifier = Modifier.size(logoSize),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = buildAnnotatedString {
+                append("Puraa")
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append(".") }
+            },
+            style = MaterialTheme.typography.titleLarge.copy(fontFamily = Bricolage),
+        )
+    }
+}
+
+/**
+ * A small mono, uppercase, wide-tracked label — the website's "eyebrow". Sits
+ * above a section as a quiet, technical caption. Defaults to the accent colour.
+ */
+@Composable
+fun Eyebrow(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary,
+) {
+    Text(
+        text = text.uppercase(),
+        color = color,
+        style = TextStyle(
+            fontFamily = PlexMono,
+            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp,
+            letterSpacing = 2.sp,
+        ),
+        modifier = modifier,
+    )
+}
 
 /** The surface role a [PuraaCard] paints itself with. */
 enum class CardTone { Neutral, Accent, Alert }

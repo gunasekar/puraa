@@ -57,7 +57,6 @@ import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import com.puraa.R
 import com.puraa.config.ConfigStore
-import com.puraa.config.Destination
 import com.puraa.config.SetupCode
 import com.puraa.relay.OutboxEntity
 import com.puraa.relay.OutboxRepository
@@ -113,17 +112,7 @@ fun RelayScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_logo),
-                            contentDescription = "Puraa",
-                            modifier = Modifier.size(34.dp),
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        StatusPill(active = true)
-                    }
-                },
+                title = { PuraaWordmark() },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
@@ -133,7 +122,7 @@ fun RelayScreen(
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(
-                            text = { Text("Share setup (QR)") },
+                            text = { Text("Share this setup") },
                             onClick = {
                                 menuOpen = false
                                 showQr = true
@@ -158,6 +147,10 @@ fun RelayScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.Top,
         ) {
+            RelayStatusCard(destination = Sinks.labelFor(config))
+
+            Spacer(Modifier.height(20.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -171,16 +164,9 @@ fun RelayScreen(
             val smsGranted = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.RECEIVE_SMS,
             ) == PackageManager.PERMISSION_GRANTED
-            val target = when (config.relayDestination) {
-                Destination.TELEGRAM -> config.relayChannelId?.toString() ?: "(missing)"
-                Destination.DISCORD -> "Webhook configured"
-                null -> "(none)"
-            }
 
             InfoCard(
                 deviceName = config.relayDeviceName.ifBlank { "(unnamed)" },
-                destination = Sinks.labelFor(config),
-                target = target,
                 whitelistSummary = config.relaySenderWhitelist.ifBlank { "All SMS (no filter)" },
                 smsGranted = smsGranted,
             )
@@ -364,20 +350,37 @@ private fun RestrictedSmsHint(onOpenSettings: () -> Unit) {
     }
 }
 
+/**
+ * The running-status banner: a teal dot with an "Active" headline and the
+ * live destination. Shown at the top of the relay screen so the app's state
+ * reads at a glance — the header stays just the wordmark.
+ */
+@Composable
+private fun RelayStatusCard(destination: String) {
+    PuraaCard(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            StatusDot(active = true)
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text("Active", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Forwarding to $destination",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun InfoCard(
     deviceName: String,
-    destination: String,
-    target: String,
     whitelistSummary: String,
     smsGranted: Boolean,
 ) {
     PuraaCard(modifier = Modifier.fillMaxWidth()) {
         InfoRow("Device", deviceName)
-        Spacer(Modifier.height(8.dp))
-        InfoRow("To", destination)
-        Spacer(Modifier.height(8.dp))
-        InfoRow("Target", target)
         Spacer(Modifier.height(8.dp))
         InfoRow("Filter", whitelistSummary)
         Spacer(Modifier.height(8.dp))
