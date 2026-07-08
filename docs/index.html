@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Puraa · SMS to Telegram or Discord</title>
+  <link rel="canonical" href="https://gunasekar.github.io/puraa/" />
+
+  <meta name="description"
+    content="Puraa — a small Android app that forwards incoming SMS to a private Telegram channel or a Discord channel the instant each message arrives. Fill this form to build a setup QR the app scans." />
+  <meta property="og:title" content="Puraa" />
+  <meta property="og:description"
+    content="Forward incoming SMS to a private Telegram channel or Discord webhook as each message arrives. No second app, no server." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gunasekar.github.io/puraa/" />
+  <meta property="og:image" content="https://gunasekar.github.io/puraa/assets/puraa-logo.png" />
+
+  <link rel="icon" type="image/svg+xml" href="assets/puraa-logo.svg" />
+  <link rel="apple-touch-icon" href="assets/puraa-logo.png" />
+
+  <style>
+    /* Palette mirrors the Puraa app's dark theme (ui/theme/Color.kt):
+       teal accent, near-black ground with a faint cool bias, soft cards.
+       The SATURATED accent is reserved for the one primary action per
+       section and true selection; a muted teal *container* tone carries
+       accent emphasis that is not the primary action (e.g. a picked
+       toggle segment) — the same rule the app follows. */
+    :root {
+      color-scheme: dark;
+      --bg: #0B0E0D;
+      --surface: #161A19;
+      --surface-variant: #232928;
+      --on-surface: #EFF3F1;
+      --on-surface-variant: #98A09D;
+      --outline: #373E3C;
+      --accent: #45D6C0;
+      --on-accent: #04211D;
+      --accent-container: #173B34;
+      --on-accent-container: #8FEADA;
+      --error: #E5484D;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--on-surface);
+      min-height: 100vh;
+      padding: 32px 20px 96px;
+    }
+    main { max-width: 560px; margin: 0 auto; }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--on-surface-variant);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .breadcrumb a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted var(--outline);
+    }
+    .breadcrumb a:hover { color: var(--on-surface); }
+
+    .logo { display: block; width: 56px; height: 56px; margin-bottom: 14px; }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;           /* app headlineMedium is ExtraBold */
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+    }
+    p.lead { color: var(--on-surface-variant); margin: 0 0 24px; }
+    p.lead strong { color: var(--on-surface); font-weight: 600; }
+
+    a.link { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+
+    /* Hero primary action — the one saturated fill in the intro. */
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: var(--on-accent);
+      text-decoration: none;
+      font-weight: 700;
+      padding: 13px 20px;
+      border-radius: 14px;        /* app 'small' radius */
+      transition: transform .08s ease, filter .12s ease;
+    }
+    .cta:hover { filter: brightness(1.05); }
+    .cta:active { transform: translateY(1px); }
+    .cta small { display: block; font-weight: 500; font-size: 11px; opacity: 0.72; }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      margin: 44px 0 14px;
+    }
+
+    /* Destination segmented toggle. Selected uses the muted accent
+       container — never the saturated fill, which means "primary action". */
+    .seg {
+      display: flex;
+      gap: 6px;
+      padding: 4px;
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+    .seg button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--on-surface-variant);
+      font: inherit;
+      font-weight: 600;
+      padding: 11px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease;
+    }
+    .seg button[aria-selected="true"] {
+      background: var(--accent-container);
+      color: var(--on-accent-container);
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 11px 13px;
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 12px;
+      color: var(--on-surface);
+      font-size: 15px;
+      font-family: inherit;
+    }
+    .field input::placeholder { color: #5b6462; }
+    .field input:focus { outline: none; border-color: var(--accent); }
+    .field .hint { margin-top: 5px; font-size: 12px; color: var(--on-surface-variant); }
+    [hidden] { display: none !important; }
+
+    .out-panel {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 18px;        /* app 'medium' card radius */
+      text-align: center;
+    }
+    .qr-holder {
+      display: inline-block;
+      background: #ffffff;
+      padding: 14px;
+      border-radius: 14px;
+      line-height: 0;
+      min-width: 200px;
+      min-height: 200px;
+    }
+    .qr-holder canvas { width: 220px; height: 220px; image-rendering: pixelated; }
+    .qr-empty { color: #5b6462; font-size: 14px; padding: 84px 16px; }
+    .payload {
+      margin-top: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      text-align: left;
+      color: var(--on-surface-variant);
+      background: var(--bg);
+      border: 1px solid var(--outline);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .payload.empty { color: #4a524f; }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .btn {
+      flex: 1;
+      min-width: 140px;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: transform .08s ease, opacity .12s ease, filter .12s ease;
+    }
+    .btn.primary { background: var(--accent); color: var(--on-accent); }
+    .btn.primary:hover:not(:disabled) { filter: brightness(1.05); }
+    .btn.primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn.secondary { background: var(--surface-variant); color: var(--on-surface); }
+    .btn.secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:not(:disabled):active { transform: translateY(1px); }
+
+    .steps { padding-left: 20px; color: var(--on-surface); }
+    .steps li { margin-bottom: 8px; }
+    .steps strong { color: var(--accent); font-weight: 600; }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12.5px;
+      background: rgba(143, 234, 218, 0.10);
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: var(--on-accent-container);
+    }
+    .note { color: var(--on-surface-variant); font-size: 13px; margin-top: 10px; }
+    .note a { color: var(--accent); text-decoration: none; }
+    footer { margin-top: 56px; color: var(--on-surface-variant); font-size: 13px; }
+    footer a { color: var(--on-surface); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="breadcrumb">
+      <a href="https://www.padnam.in/">Padnam Technologies</a> · Puraa
+    </div>
+
+    <img class="logo" src="assets/puraa-logo.svg" alt="Puraa" width="56" height="56" />
+    <h1>Puraa</h1>
+    <p class="lead">
+      A small Android app that forwards incoming SMS to a private
+      <strong>Telegram channel</strong> or <strong>Discord channel</strong> the
+      instant each message arrives — handy for mirroring bank, UPI, and OTP
+      alerts to a client you already use. No second app, no server.
+    </p>
+
+    <a class="cta" href="https://github.com/gunasekar/puraa/releases/latest">
+      Download the latest APK
+      <small>Android · sideload · from GitHub Releases</small>
+    </a>
+
+    <h2>Build a setup QR</h2>
+    <p class="lead" style="margin-bottom:18px;">
+      Fill these in, then in Puraa tap <strong>Scan setup QR code</strong> and
+      point the phone at the code below. It pre-fills the fields for you to
+      review before saving — nothing is applied until you confirm on the phone.
+    </p>
+
+    <div class="seg" role="tablist" aria-label="Destination">
+      <button id="tab-tg" role="tab" aria-selected="true">Telegram</button>
+      <button id="tab-dc" role="tab" aria-selected="false">Discord</button>
+    </div>
+
+    <!-- Telegram fields -->
+    <div id="fields-tg">
+      <div class="field">
+        <label for="bot">Bot token</label>
+        <input id="bot" type="text" autocomplete="off" placeholder="1234567890:AAH..." />
+        <div class="hint">From <code>@BotFather</code> — the bot that posts to your channel.</div>
+      </div>
+      <div class="field">
+        <label for="ch">Channel id</label>
+        <input id="ch" type="text" autocomplete="off" inputmode="numeric" placeholder="-1001234567890" />
+        <div class="hint">The private channel id — a negative number.</div>
+      </div>
+    </div>
+
+    <!-- Discord fields -->
+    <div id="fields-dc" hidden>
+      <div class="field">
+        <label for="webhook">Webhook URL</label>
+        <input id="webhook" type="text" autocomplete="off"
+          placeholder="https://discord.com/api/webhooks/..." />
+        <div class="hint">Channel → Edit → Integrations → Webhooks → Copy Webhook URL.</div>
+      </div>
+    </div>
+
+    <!-- Shared: sender filter -->
+    <div class="field">
+      <label for="filter">Sender filter <span style="text-transform:none">(optional)</span></label>
+      <input id="filter" type="text" autocomplete="off" placeholder="HDFCBK,ICICIB,CRED" />
+      <div class="hint">Comma-separated sender ids. Leave blank to forward every SMS.</div>
+    </div>
+
+    <div class="out-panel">
+      <div class="qr-holder" id="qr-holder">
+        <div class="qr-empty" id="qr-empty">Fill in the fields above to generate the QR.</div>
+      </div>
+      <div class="payload empty" id="payload">No setup code yet</div>
+      <div class="actions">
+        <button id="dl-btn" class="btn primary" disabled>Download QR (PNG)</button>
+        <button id="copy-btn" class="btn secondary" disabled>Copy setup code</button>
+      </div>
+      <div class="note" id="hint"></div>
+    </div>
+
+    <h2>How to use it</h2>
+    <ol class="steps">
+      <li>Install the APK on the phone whose SMS you want to forward (see the note below on install method and SMS permissions).</li>
+      <li>Open Puraa and go to the relay setup screen.</li>
+      <li>Tap <strong>Scan setup QR code</strong> and point at the QR above.</li>
+      <li>Review the pre-filled fields, then save to start forwarding.</li>
+    </ol>
+    <p class="note">
+      Installing via <code>adb install</code> keeps SMS permissions working;
+      some sideload methods get SMS access blocked by Android. See the
+      <a href="https://github.com/gunasekar/puraa#installing-the-apk">README</a>
+      for the details.
+    </p>
+
+    <footer>
+      Built by <a href="https://www.padnam.in/">Padnam Technologies</a>.
+      Source: <a href="https://github.com/gunasekar/puraa">github.com/gunasekar/puraa</a>.
+      Questions: <a href="mailto:guna@padnam.in">guna@padnam.in</a>.
+    </footer>
+  </main>
+
+  <script src="qrcode.js"></script>
+  <script>
+    const HEADER = 'PURAA-SETUP/1';
+    let dest = 'tg';           // 'tg' | 'dc'
+    let lastCanvas = null;     // the rendered QR canvas, for PNG download
+
+    const els = {
+      tabTg: document.getElementById('tab-tg'),
+      tabDc: document.getElementById('tab-dc'),
+      fieldsTg: document.getElementById('fields-tg'),
+      fieldsDc: document.getElementById('fields-dc'),
+      bot: document.getElementById('bot'),
+      ch: document.getElementById('ch'),
+      webhook: document.getElementById('webhook'),
+      filter: document.getElementById('filter'),
+      holder: document.getElementById('qr-holder'),
+      empty: document.getElementById('qr-empty'),
+      payload: document.getElementById('payload'),
+      dl: document.getElementById('dl-btn'),
+      copy: document.getElementById('copy-btn'),
+      hint: document.getElementById('hint'),
+    };
+
+    // Build the newline-delimited PURAA-SETUP payload. Returns null if the
+    // active destination isn't fully specified. Mirrors SetupCode.kt exactly:
+    // filter is trimmed and omitted when empty; the device names itself so no
+    // user/name field is ever included.
+    function buildPayload() {
+      const filter = els.filter.value.trim();
+      const withFilter = (lines) =>
+        filter ? lines.concat('filter=' + filter) : lines;
+
+      if (dest === 'tg') {
+        const bot = els.bot.value.trim();
+        const ch = els.ch.value.trim();
+        // ch must be an integer, matching channelId.toLongOrNull() on device.
+        if (!bot || !ch || !/^-?\d+$/.test(ch)) return null;
+        return [HEADER].concat(withFilter(['bot=' + bot, 'ch=' + ch])).join('\n');
+      } else {
+        const webhook = els.webhook.value.trim();
+        if (!webhook) return null;
+        return [HEADER].concat(withFilter(['discord=' + webhook])).join('\n');
+      }
+    }
+
+    function renderQR(text) {
+      // Auto type number (0), medium error correction — comfortably fits a
+      // bot token or a Discord webhook URL plus a filter.
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+
+      const count = qr.getModuleCount();
+      const scale = 8;          // px per module in the backing bitmap
+      const size = count * scale;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#000000';
+      for (let r = 0; r < count; r++) {
+        for (let c = 0; c < count; c++) {
+          if (qr.isDark(r, c)) {
+            ctx.fillRect(c * scale, r * scale, scale, scale);
+          }
+        }
+      }
+      els.holder.innerHTML = '';
+      els.holder.appendChild(canvas);
+      lastCanvas = canvas;
+    }
+
+    function refresh() {
+      const text = buildPayload();
+      if (!text) {
+        lastCanvas = null;
+        els.holder.innerHTML = '';
+        els.holder.appendChild(els.empty);
+        els.payload.textContent = 'No setup code yet';
+        els.payload.classList.add('empty');
+        els.dl.disabled = true;
+        els.copy.disabled = true;
+        return;
+      }
+      renderQR(text);
+      els.payload.textContent = text;
+      els.payload.classList.remove('empty');
+      els.dl.disabled = false;
+      els.copy.disabled = false;
+    }
+
+    function selectDest(next) {
+      dest = next;
+      const tg = next === 'tg';
+      els.tabTg.setAttribute('aria-selected', String(tg));
+      els.tabDc.setAttribute('aria-selected', String(!tg));
+      els.fieldsTg.hidden = !tg;
+      els.fieldsDc.hidden = tg;
+      refresh();
+    }
+
+    els.tabTg.addEventListener('click', () => selectDest('tg'));
+    els.tabDc.addEventListener('click', () => selectDest('dc'));
+    [els.bot, els.ch, els.webhook, els.filter].forEach((i) =>
+      i.addEventListener('input', refresh));
+
+    els.dl.addEventListener('click', () => {
+      if (!lastCanvas) return;
+      const a = document.createElement('a');
+      a.href = lastCanvas.toDataURL('image/png');
+      a.download = 'puraa-setup-qr.png';
+      a.click();
+    });
+
+    els.copy.addEventListener('click', async () => {
+      const text = buildPayload();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        els.hint.textContent = 'Setup code copied.';
+      } catch (e) {
+        els.hint.textContent = 'Copy failed — select the code above and copy manually.';
+      }
+      setTimeout(() => { els.hint.textContent = ''; }, 3000);
+    });
+
+    refresh();
+  </script>
+</body>
+</html>
