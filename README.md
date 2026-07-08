@@ -110,10 +110,13 @@ matching credentials above, add a device name and an optional sender whitelist
 (e.g. `HDFCBK,ICICIB,CRED`), and grant SMS access. That's it — the app never
 has to be opened again.
 
-To skip the typing, configure one phone first, then use **Share setup (QR)**
-on it: the next phone scans that QR to copy the config into the form for
-review and Save. The QR is a self-contained Puraa code — not a link — so it
-only means anything to this app.
+To skip the typing, **scan a setup QR** instead. Generate one on the
+[Puraa website](https://gunasekar.github.io/puraa/) — pick Telegram or Discord,
+fill in your destination, and the page builds a QR you can download or show on
+screen. (An already-configured phone can also produce one via **Share setup
+(QR)**.) On the relay phone, tap **Scan setup QR code**, point it at the QR,
+and it fills the form for review and Save. The QR is a self-contained Puraa
+code — not a link — so it only means anything to this app.
 
 Those are the only two ways to configure the relay — manual entry or an
 in-person QR scan. Puraa registers no deep link, so nothing can point a relay
