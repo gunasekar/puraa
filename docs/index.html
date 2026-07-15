@@ -369,6 +369,29 @@
     .field .hint code, code.k { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); color: var(--on-accent-soft); padding: 1px 6px; border-radius: 5px; }
     [hidden] { display: none !important; }
 
+    /* "Find from token" — pull the bot's recent channels via getUpdates */
+    .find-btn {
+      font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: none;
+      color: var(--accent); background: transparent; border: 1px solid var(--line);
+      border-radius: 999px; padding: 3px 10px; cursor: pointer;
+      transition: color .16s, border-color .16s, background .16s, opacity .16s;
+    }
+    .find-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--on-accent-soft); }
+    .find-btn:disabled { opacity: .5; cursor: progress; }
+    .ch-results { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .ch-opt {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%;
+      text-align: left; font-family: var(--body); cursor: pointer;
+      background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px;
+      transition: border-color .16s, background .16s;
+    }
+    .ch-opt:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .ch-opt .ct { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .ch-opt .cid { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+    .ch-note { font-size: 12.5px; color: var(--ink-faint); padding: 2px 0; }
+    .ch-note.err { color: #e5847a; }
+    :root[data-theme="light"] .ch-note.err { color: #c0392b; }
+
     /* boarding-pass ticket ------------------------------------- */
     .ticket-wrap { position: sticky; top: 92px; }
     .ticket {
@@ -588,9 +611,10 @@ At:     08 Jul 2026, 05:31 PM</div>
                 <div class="hint">From <code class="k">@BotFather</code> — the bot that posts to your channel.</div>
               </div>
               <div class="field">
-                <label for="ch">Channel id</label>
+                <label for="ch">Channel id <button type="button" id="find-ch" class="find-btn">Find from token</button></label>
                 <input id="ch" type="text" autocomplete="off" inputmode="numeric" placeholder="-1001234567890" />
                 <div class="hint">Your private channel id — a negative number.</div>
+                <div class="ch-results" id="ch-results" hidden></div>
               </div>
             </div>
 
@@ -694,6 +718,7 @@ At:     08 Jul 2026, 05:31 PM</div>
       frame: $('qr-frame'), empty: $('qr-empty'),
       payload: $('payload'), dl: $('dl-btn'), copy: $('copy-btn'), copied: $('copied'),
       kind: $('tk-kind'), dDest: $('d-dest'), dFilter: $('d-filter'),
+      findCh: $('find-ch'), chResults: $('ch-results'),
     };
 
     function buildPayload() {
@@ -769,6 +794,82 @@ At:     08 Jul 2026, 05:31 PM</div>
     els.tabTg.addEventListener('click', () => selectDest('tg'));
     els.tabDc.addEventListener('click', () => selectDest('dc'));
     [els.bot, els.ch, els.webhook, els.filter].forEach((i) => i.addEventListener('input', refresh));
+
+    /* ---- find channels from the bot token ----
+       Telegram has no API to list every channel a bot belongs to, so we read
+       the bot's recent updates (getUpdates) and surface the chats seen there.
+       Works only when the token has no webhook set and the chat has had recent
+       activity — a freshly made, silent channel won't appear yet. */
+    function chNote(text, isErr) {
+      els.chResults.hidden = false;
+      els.chResults.innerHTML = '';
+      const p = document.createElement('div');
+      p.className = 'ch-note' + (isErr ? ' err' : '');
+      p.textContent = text;
+      els.chResults.appendChild(p);
+    }
+
+    function extractChats(updates) {
+      const seen = new Map();
+      const keys = ['message', 'channel_post', 'edited_channel_post', 'edited_message', 'my_chat_member', 'chat_member'];
+      for (const u of updates) {
+        for (const k of keys) {
+          const chat = u[k] && u[k].chat;
+          if (chat && chat.type !== 'private' && !seen.has(chat.id)) {
+            seen.set(chat.id, { id: chat.id, title: chat.title || chat.username || String(chat.id), type: chat.type });
+          }
+        }
+      }
+      return [...seen.values()];
+    }
+
+    async function findChannels() {
+      const token = els.bot.value.trim();
+      if (!token) { chNote('Enter the bot token above first.', true); return; }
+      els.findCh.disabled = true;
+      const label = els.findCh.textContent;
+      els.findCh.textContent = 'Looking…';
+      chNote('Reading the bot’s recent chats…', false);
+      try {
+        const url = 'https://api.telegram.org/bot' + token
+          + '/getUpdates?limit=100&allowed_updates='
+          + encodeURIComponent('["message","channel_post","my_chat_member","chat_member"]');
+        const data = await (await fetch(url)).json();
+        if (!data.ok) {
+          const d = data.description || 'request rejected';
+          chNote(/webhook/i.test(d)
+            ? 'A webhook is set on this bot, so getUpdates is unavailable. Enter the channel id manually.'
+            : 'Telegram: ' + d, true);
+          return;
+        }
+        const chats = extractChats(data.result);
+        if (!chats.length) {
+          chNote('No channels in the bot’s recent updates. Post a message in the channel (or re-add the bot), then try again — or paste the id manually.', false);
+          return;
+        }
+        els.chResults.hidden = false;
+        els.chResults.innerHTML = '';
+        for (const c of chats) {
+          const b = document.createElement('button');
+          b.type = 'button'; b.className = 'ch-opt';
+          b.innerHTML = '<span class="ct"></span><span class="cid"></span>';
+          b.querySelector('.ct').textContent = c.title;
+          b.querySelector('.cid').textContent = c.id + ' · ' + c.type;
+          b.addEventListener('click', () => {
+            els.ch.value = String(c.id);
+            els.chResults.hidden = true;
+            refresh();
+          });
+          els.chResults.appendChild(b);
+        }
+      } catch (e) {
+        chNote('Could not reach Telegram — check the token and your connection.', true);
+      } finally {
+        els.findCh.disabled = false;
+        els.findCh.textContent = label;
+      }
+    }
+    els.findCh.addEventListener('click', findChannels);
 
     els.dl.addEventListener('click', () => {
       if (!lastCanvas) return;
