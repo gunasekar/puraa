@@ -13,8 +13,9 @@ This runs `assembleRelease` and copies the result to
 the git tag — see [Versioning](#versioning)). `dist/` is gitignored.
 
 Install it on any phone by sideloading — no Developer Options or USB debugging
-needed: transfer the `.apk` (Drive/email/USB), tap it, allow the opening app to
-"install unknown apps", tap **Install**.
+needed: transfer the `.apk` (Drive/email/USB), tap it, and clear the three
+guards in the [README](../README.md#installing-the-apk), one of which is
+Play Protect (below).
 
 ## Signing
 
@@ -47,6 +48,23 @@ The keystore is Puraa's **permanent signing identity**. Lose it and you can
 never ship an update that installs over an existing `com.puraa` — users would
 have to uninstall and reinstall. Keep a copy somewhere safe and independent of
 this machine.
+
+## Play Protect blocks the first install
+
+Play Protect's enhanced fraud protection refuses sideloaded APKs declaring any
+of `RECEIVE_SMS`, `READ_SMS`, `NOTIFICATION_LISTENER`, or `ACCESSIBILITY`.
+Puraa declares the first two — they *are* the app — so a fresh install is
+blocked until the user pauses Play Protect. It usually surfaces as a bare
+**"App not installed"** with no reason given.
+
+**This is not a build defect.** The check reads the manifest at install time;
+signing, `versionCode`, and the CI pipeline have nothing to do with it. When a
+report like this comes in, don't audit the APK — point at the README steps.
+
+Only the first install is gated; later APKs go over an existing Puraa
+untouched. An app store would avoid it entirely (stores are exempt, only
+"internet-sideloading" is blocked), but Play Store policy limits SMS
+permissions to default SMS handlers, so that route is closed to Puraa.
 
 ## Versioning
 

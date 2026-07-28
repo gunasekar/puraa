@@ -74,7 +74,10 @@ message, a few times a day.
 - **No background footprint** — the app is event-driven and dormant between
   messages (see §10, Reliability).
 - **No bidirectional messaging** (destination → SIM).
-- **No Play Store distribution, accounts, sign-up, or billing.**
+- **No Play Store distribution, accounts, sign-up, or billing.** The cost is
+  that Play Protect blocks the *first* sideloaded install, since Puraa declares
+  SMS permissions — see
+  [RELEASE.md](RELEASE.md#play-protect-blocks-the-first-install).
 - **No iOS** — iOS does not permit third-party SMS access.
 - **No MMS, RCS, or non-SMS notifications** (WhatsApp, etc.).
 
