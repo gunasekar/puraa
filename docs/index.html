@@ -675,18 +675,28 @@ At:     08 Jul 2026, 05:31 PM</div>
       <div class="section-head reveal">
         <span class="eyebrow">Before you fly</span>
         <h2>Install the APK — the right way.</h2>
-        <p>How you install matters for SMS permissions. Apps installed over <code class="k" style="background:var(--surface-2);color:var(--on-accent-soft);border:1px solid var(--line-soft)">adb</code> keep SMS access; some sideload paths get it blocked by Android.</p>
+        <p>Puraa ships outside the Play Store, so Android puts three guards in the way. Steps 1 and 2 are temporary — switch both back once the install is done.</p>
       </div>
       <div class="install-grid">
-        <div class="opt reco reveal">
-          <div class="tag">Recommended</div>
-          <h3>Install with adb</h3>
-          <p><code>adb install puraa.apk</code> from a computer. SMS permission stays grantable, and the relay works as intended.</p>
+        <div class="opt reveal">
+          <div class="tag">Step 1 · temporary</div>
+          <h3>Let the browser install apps</h3>
+          <p>Chrome, Files — whichever app you tap the APK from. <b>Settings → Apps → Special app access → Install unknown apps →</b> pick it <b>→ Allow from this source</b>. Switch it back off after; re-grant briefly for each update.</p>
         </div>
         <div class="opt reveal">
-          <div class="tag">Heads up</div>
-          <h3>Direct sideload</h3>
-          <p>Opening the APK on the phone can flag it, and Android may block SMS access. See the <a href="https://github.com/gunasekar/puraa#installing-the-apk">README</a> for the fix.</p>
+          <div class="tag">Step 2 · temporary</div>
+          <h3>Turn Play Protect off</h3>
+          <p>It blocks the first install of a sideloaded SMS app, usually as a bare <b>“App not installed”</b>. <b>Play Store → profile → Play Protect → ⚙ → scanning off.</b> Turn it back on after — only the first install is gated.</p>
+        </div>
+        <div class="opt reveal">
+          <div class="tag">Step 3 · keep</div>
+          <h3>Allow the restricted setting</h3>
+          <p>On Android 13+, SMS stays greyed out for sideloaded apps. <b>Settings → Apps → Puraa → ⋮ → Allow restricted settings</b>, then grant <b>Permissions → SMS</b>. Scoped to Puraa, stays on.</p>
+        </div>
+        <div class="opt reveal">
+          <div class="tag">Shortcut</div>
+          <h3>Or install with adb</h3>
+          <p><code>adb install puraa.apk</code> from a computer sidesteps all three. Needs USB debugging. Detail in the <a href="https://github.com/gunasekar/puraa#installing-the-apk">README</a>.</p>
         </div>
       </div>
     </section>

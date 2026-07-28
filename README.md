@@ -67,29 +67,28 @@ notifies you on new messages — no bot needed.
 ### Installing the APK
 
 Grab the latest `.apk` from the [Releases](https://github.com/gunasekar/puraa/releases/latest)
-page. There are two ways to install it, and **which one you pick matters** for
-SMS permissions (see the note below).
+page and tap it on the phone. Android puts three guards in the way of a
+sideloaded app:
 
-**Option A — `adb` (recommended).** Apps installed this way are not flagged as
-sideloaded, so the SMS permission works normally with no extra step. With USB
-debugging enabled on the phone:
+1. **Let the installing app install apps.** Chrome, Files — whichever you tap
+   the `.apk` from. **Settings → Apps → Special app access → Install unknown
+   apps →** pick it **→ Allow from this source**. *Switch it back off after —
+   re-grant briefly for each update.*
+2. **Turn Play Protect off.** It blocks the first install of a sideloaded SMS
+   app, usually as a bare "App not installed". **Play Store → profile → Play
+   Protect → ⚙ → Scan apps with Play Protect: off.** *Turn it back on after —
+   only the first install is gated.*
+3. **Allow the restricted SMS setting** — see below. Scoped to Puraa, stays on.
 
-```
-adb install -r puraa-release.apk
-```
-
-**Option B — download on the phone.** Open the Releases page in the phone's
-browser, download the `.apk`, and tap it to install (you'll need to allow
-"install unknown apps" for the browser once). This is the easy path, but it
-triggers the restricted-settings block described next.
+`adb install -r puraa-<version>.apk` from a computer sidesteps all three.
 
 #### If the SMS permission is greyed out ("Restricted setting")
 
 On **Android 13 and newer**, SMS is a *restricted setting*: when an app is
-installed from a browser or file manager (Option B), Android silently blocks
-the SMS permission. The in-app prompt does nothing, and in Settings the SMS
-toggle is greyed out with *"Restricted setting — for your security this setting
-is currently unavailable."* This is an OS security measure, not a Puraa bug.
+installed from a browser or file manager, Android silently blocks the SMS
+permission. The in-app prompt does nothing, and in Settings the SMS toggle is
+greyed out with *"Restricted setting — for your security this setting is
+currently unavailable."* This is an OS security measure, not a Puraa bug.
 
 To unblock it:
 
@@ -100,8 +99,7 @@ To unblock it:
 
 If the ⋮ menu doesn't show that option yet, open Puraa and tap the SMS button
 once so the system records a blocked attempt, then return to App info — the
-entry appears afterwards. Installing via **Option A (`adb`)** avoids this whole
-step.
+entry appears afterwards. Installing over `adb` avoids this step entirely.
 
 ### On the phone to be relayed
 
