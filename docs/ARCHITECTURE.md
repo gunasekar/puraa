@@ -475,10 +475,18 @@ is rejected by the platform.
 
 `REQUEST_INSTALL_PACKAGES` is only half of what's needed, though. The other half
 is the user-granted **"Install unknown apps"** app op, readable via
-`PackageManager.canRequestPackageInstalls()`. The update dialog surfaces a
-shortcut to that settings page when the op is missing, but treats it as a hint
-rather than a gate — an app updating its own package may be exempt from the
-check, and refusing to try would then block a flow that would have worked.
+`PackageManager.canRequestPackageInstalls()`.
+
+**It is required for self-update too** — verified on a Pixel 8a (Android 16).
+Updating one's own package is *not* exempt: without the op, the download,
+digest check and commit all succeed, and the platform then refuses at the
+confirmation step with *"isn't allowed to install unknown apps from this
+source"*, reported back as `INSTALL_FAILED_ABORTED: User rejected permissions`.
+
+The update dialog still treats a missing op as a **hint**, not a gate, offering
+a shortcut to that settings page while leaving "Update now" enabled. Android's
+own refusal dialog also offers a route to Settings, so the state is recoverable
+either way, and one code path beats two.
 
 Notably **not** requested: notification-listener access and
 `RECEIVE_BOOT_COMPLETED`.
@@ -555,8 +563,9 @@ flowchart TD
     S --> V{"SHA-256 matches?"}
     V -->|no| X["Abandon session, report in the dialog"]
     V -->|yes| K[commit]
-    K --> P{"Puraa owns the package?"}
-    P -->|yes| I["Installs immediately, no dialog"]
+    K --> PP["Play Protect scan, if enabled — trips on every release"]
+    PP --> P{"Puraa owns the package?"}
+    P -->|yes| I["No confirmation of Android's own"]
     P -->|"no, first time"| Q["Android's confirm dialog, opened directly"]
 ```
 
@@ -587,13 +596,21 @@ Android's confirmation Intent directly. A background commit could not do this �
 Android 10+ drops activity starts from a background app — which is the concrete
 mechanism behind the design decision above.
 
-### One tap, then zero
+### One tap, then zero — with a caveat
 
-The **first** self-update always shows Android's confirmation dialog: whoever
-installed Puraa (adb, a file manager) is the *installer of record*, and Android
-will not let a different installer replace an app without asking. Committing it
-makes Puraa its own installer, after which "Update now" installs with no dialog
-at all.
+The **first** self-update needs a confirmation: whoever installed Puraa (adb, a
+file manager) is the *installer of record*, and Android will not let a different
+installer replace an app without asking. Committing it makes Puraa its own
+installer — confirmed in testing, `installerPackageName` flips from `null` to
+`com.puraa` — which is the precondition for later updates applying with no
+dialog.
+
+**Whether they actually do is unverified.** Testing only ever reached the first
+update, and on a Play Protect device the scan above interposed its own
+confirmation regardless. A truly interaction-free second update requires both
+the installer-of-record condition *and* Play Protect not interrupting, and the
+latter keys on a hash that changes every release. Treat "then zero" as the
+platform's intent, not a measured result, until a second release proves it.
 
 Two platform details shape this:
 
@@ -619,8 +636,22 @@ Two platform details shape this:
 
 Separate from the confirmation dialog: Android also requires the user to have
 allowed **Puraa itself** to install apps ("Install unknown apps" → Puraa), which
-is a different grant from the one Chrome needs to deliver the first APK. §12
-covers why this is surfaced as a hint rather than enforced as a gate.
+is a different grant from the one Chrome needs to deliver the first APK. It is
+required for self-update — see §12 — and is a one-time grant per install.
+
+### Play Protect scans every release
+
+On a device with Play Protect enabled, committing the session hands off to
+*"Play Protect hasn't seen this app before"* → **Scan app** → *"This app looks
+safe"* → **Install**. That check keys on the **APK hash**, so a new release
+trips it *every time*, not only on a first install. The APK is uploaded to
+Google as part of the scan.
+
+Observed on a Pixel 8a (Android 16) updating 0.4.0-dirty → 0.4.0. It is a soft
+gate, not the hard "App not installed" block that greets a fresh sideload of an
+SMS app ([RELEASE.md](RELEASE.md#play-protect-blocks-the-first-install)) — but it
+is two extra taps on every update, and it is what actually confirmed the install
+in that test: Android's own install-confirmation dialog never appeared.
 
 ### The accepted cost
 

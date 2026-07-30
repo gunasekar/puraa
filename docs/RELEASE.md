@@ -107,10 +107,17 @@ blocked until the user pauses Play Protect. It usually surfaces as a bare
 signing, `versionCode`, and the CI pipeline have nothing to do with it. When a
 report like this comes in, don't audit the APK — point at the README steps.
 
-Only the first install is gated; later APKs go over an existing Puraa
-untouched. An app store would avoid it entirely (stores are exempt, only
-"internet-sideloading" is blocked), but Play Store policy limits SMS
-permissions to default SMS handlers, so that route is closed to Puraa.
+Only the first install hits this **hard block**. An app store would avoid it
+entirely (stores are exempt, only "internet-sideloading" is blocked), but Play
+Store policy limits SMS permissions to default SMS handlers, so that route is
+closed to Puraa.
+
+Later APKs are **not** untouched, though. A separate, softer Play Protect check
+fires on every update installed by Puraa itself: *"Play Protect hasn't seen this
+app before"* → **Scan app** → *"This app looks safe"* → **Install**. It keys on
+the APK hash, so each new release trips it, and the APK is uploaded to Google
+for the scan. Observed on a Pixel 8a (Android 16). Not a blocker — but budget
+two extra taps per release, and don't be surprised by it.
 
 ## Versioning
 

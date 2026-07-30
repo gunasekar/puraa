@@ -36,9 +36,13 @@ import java.util.concurrent.TimeUnit
  * installed Puraa (adb, a file manager, Obtainium) is the installer of record,
  * and Android won't let a different installer replace an app silently. Once
  * Puraa has installed itself once it owns the package, and later updates skip
- * that dialog — the user's "Update now" tap is then the only interaction. On
- * Android 11 and older no dialog-free path exists at all, so the confirmation
- * appears every time.
+ * *that* dialog. On Android 11 and older no dialog-free path exists at all, so
+ * it appears every time.
+ *
+ * Skipping it is not the same as no interaction. On a device with Play Protect
+ * enabled, a separate scan interposes on every release — it keys on the APK
+ * hash, so each new build is unseen — and in testing that scan, not Android's
+ * installer, was what confirmed the install. See ARCHITECTURE.md §13.
  */
 class Updater(
     private val context: Context,
@@ -78,10 +82,16 @@ class Updater(
      * apps" → Puraa). `REQUEST_INSTALL_PACKAGES` in the manifest is only half
      * the story; this app op is the other half.
      *
-     * Used to *hint*, never to gate: an app updating its own package may be
-     * exempt from this check, and refusing to try would then block a flow that
-     * would have worked. So the update is always attempted, and the hint (plus
-     * a shortcut to the settings page) appears only when the op is missing.
+     * **Required, including for self-update** — verified on a Pixel 8a
+     * (Android 16): without it the commit reaches Android's confirmation step
+     * and is refused with "isn't allowed to install unknown apps from this
+     * source", surfacing as `INSTALL_FAILED_ABORTED`. Updating one's own
+     * package is *not* exempt.
+     *
+     * Still used to hint rather than to gate. The platform's own refusal
+     * dialog offers a route to Settings, so a missing op is recoverable
+     * either way, and leaving "Update now" enabled keeps one code path
+     * instead of two.
      */
     val canInstallPackages: Boolean
         get() = runCatching { context.packageManager.canRequestPackageInstalls() }

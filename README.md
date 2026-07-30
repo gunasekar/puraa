@@ -111,17 +111,19 @@ if there's a newer version you get a card on the main screen and a dot on the �
 menu. Tap **Update now** and it downloads, verifies, and installs. No store, no
 Obtainium, no hunting for APKs.
 
-**The first update asks you to confirm**, because until then Android considers
-Chrome (or `adb`) the app that installed Puraa, and it won't let one installer
-silently replace another's app. Tap through it once and Puraa owns itself from
-then on — after that "Update now" installs with no dialog. Your relay settings
-are kept either way. (On Android 11 and older there's no dialog-free path at
-all, so you'll confirm each time.)
+**The first time, you'll need to allow Puraa to install apps** — the same
+"Install unknown apps" screen as guard 1, but for Puraa rather than Chrome.
+Android will otherwise refuse the install outright. The update dialog offers a
+shortcut, and Android's refusal also links to it. One-time grant.
 
-Android may also ask you to allow **Puraa** to install apps that first time —
-the same "Install unknown apps" screen as guard 1, but for Puraa rather than
-Chrome. The update dialog offers a shortcut to it. Like the others, a one-time
-grant.
+After that, expect **Play Protect** on each update: *"Play Protect hasn't seen
+this app before"* → **Scan app** → *"This app looks safe"* → **Install**. It
+recognises apps by their exact file, so every new release is new to it. Two
+extra taps, every time. (On Android 11 and older, Android adds its own install
+confirmation on top — there's no way to skip it on those versions.)
+
+Your relay settings, message history, and permissions are kept throughout —
+tested, nothing to re-enter.
 
 You can also check any time via **⋮ menu → Check for updates**, which tells you
 when you're already on the latest release.
