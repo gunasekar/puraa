@@ -84,7 +84,10 @@ fun UpdateDialog(
     // read here before the reset above can land — which would otherwise
     // replace a fresh "update available" with the stale error.
     LaunchedEffect(outcome) {
-        if (state !is UpdateState.Working && state !is UpdateState.AwaitingConfirmation) {
+        if (state !is UpdateState.Working &&
+            state !is UpdateState.Installing &&
+            state !is UpdateState.AwaitingConfirmation
+        ) {
             return@LaunchedEffect
         }
         when (val o = outcome) {
@@ -97,9 +100,14 @@ fun UpdateDialog(
     }
 
     val available = state as? UpdateState.Available
+    val working = state is UpdateState.Working
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        // While the download runs, only the explicit Cancel may stop it. An
+        // outside tap or a Back press is far too easy to hit by accident, and
+        // it would discard a part-downloaded APK with nothing on screen to say
+        // why the update stopped.
+        onDismissRequest = { if (!working) onDismiss() },
         title = { Text("Updates") },
         text = {
             Column {
@@ -117,31 +125,55 @@ fun UpdateDialog(
             }
         },
         confirmButton = {
-            if (available != null) {
-                TextButton(
+            when {
+                available != null -> TextButton(
                     onClick = {
                         val manifest = available.manifest
                         state = UpdateState.Working(manifest.versionName)
                         scope.launch {
-                            val result = updater.downloadAndInstall(manifest)
-                            if (result is Updater.InstallResult.Failed) {
-                                state = UpdateState.Failed(result.reason)
+                            when (val result = updater.downloadAndInstall(manifest)) {
+                                is Updater.InstallResult.Failed ->
+                                    state = UpdateState.Failed(result.reason)
+                                // Committed: the session is the platform's now
+                                // and can no longer be called off. Only advance
+                                // if the receiver hasn't already reported
+                                // something more specific — its broadcast can
+                                // land before this resumes.
+                                Updater.InstallResult.Committed ->
+                                    if (state is UpdateState.Working) {
+                                        state = UpdateState.Installing(manifest.versionName)
+                                    }
                             }
-                            // On Committed, leave the state alone — the receiver
-                            // publishes what happened next via UpdateStatus.
                         }
                     },
                 ) { Text("Update now") }
-            } else {
-                TextButton(onClick = onDismiss) { Text("Done") }
+
+                // Spelled out and disabled while the download runs. The slot
+                // can't simply be left empty: an enabled button here reads as
+                // "finish", and the only thing it could do is abandon the
+                // download the spinner is still showing.
+                working -> TextButton(onClick = {}, enabled = false) { Text("Updating…") }
+
+                // Past the commit, so there is nothing left to confirm or call
+                // off — but closing is still allowed (see onDismissRequest), so
+                // a broadcast that never arrives can't trap anyone here.
+                state is UpdateState.Installing ->
+                    TextButton(onClick = {}, enabled = false) { Text("Installing…") }
+
+                else -> TextButton(onClick = onDismiss) { Text("Done") }
             }
         },
         dismissButton = {
-            if (available != null || state is UpdateState.Working) {
+            when {
+                available != null -> TextButton(onClick = onDismiss) { Text("Not now") }
+
                 // Closing mid-download cancels it and discards the staged
                 // session — nothing is left half-installed, and the card
-                // reappears next time the app is opened.
-                TextButton(onClick = onDismiss) { Text("Not now") }
+                // reappears next time the app is opened. Named "Cancel" so
+                // that consequence is legible before the tap.
+                working -> TextButton(onClick = onDismiss) { Text("Cancel") }
+
+                else -> Unit
             }
         },
     )
@@ -181,6 +213,8 @@ private fun StateBody(state: UpdateState) {
         }
 
         is UpdateState.Working -> Working("Downloading and verifying ${state.versionName}…")
+
+        is UpdateState.Installing -> Working("Handing ${state.versionName} to Android to install…")
 
         is UpdateState.AwaitingConfirmation -> Text(
             "${state.versionName} is verified and staged. Confirm the install " +
@@ -238,7 +272,11 @@ private sealed interface UpdateState {
     data object UpToDate : UpdateState
     data object Disabled : UpdateState
     data class Available(val manifest: UpdateManifest) : UpdateState
+    /** Downloading and verifying — still ours, so still cancellable. */
     data class Working(val versionName: String) : UpdateState
+
+    /** Committed to the platform — past the point where anything can be called off. */
+    data class Installing(val versionName: String) : UpdateState
     data class AwaitingConfirmation(val versionName: String) : UpdateState
     data class Failed(val reason: String) : UpdateState
 }
