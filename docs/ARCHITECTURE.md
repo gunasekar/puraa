@@ -82,7 +82,11 @@ message, a few times a day.
   SMS permissions — see
   [RELEASE.md](RELEASE.md#play-protect-blocks-the-first-install).
 - **No iOS** — iOS does not permit third-party SMS access.
-- **No MMS, RCS, or non-SMS notifications** (WhatsApp, etc.).
+- **No MMS, RCS, or non-SMS notifications** (WhatsApp, etc.) as a *source*.
+- **No WhatsApp as a destination** either — the only route open to a personal
+  account (Baileys, a WhatsApp Web companion device) expects a device that stays
+  connected, and needs re-pairing whenever the session drops
+  ([ADR-0002](decisions/0002-no-whatsapp-destination.md)).
 
 ---
 

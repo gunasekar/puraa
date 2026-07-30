@@ -30,3 +30,4 @@ alternatives cost. If a decision has no rejected alternatives, it isn't an ADR.
 | # | Decision | Status |
 | --- | --- | --- |
 | [0001](0001-in-app-only-self-update.md) | Self-update is in-app only, checked at app entry points | Accepted |
+| [0002](0002-no-whatsapp-destination.md) | WhatsApp is not a relay destination | Accepted |

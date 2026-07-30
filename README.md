@@ -65,6 +65,24 @@ You'll enter the **bot token** and **channel id** in the app.
 You'll paste that **webhook URL** in the app. Your normal Discord client
 notifies you on new messages — no bot needed.
 
+### Why not WhatsApp?
+
+The only route open to a personal account is a library like **Baileys**, which
+links in as a WhatsApp Web companion device. A linked device is expected to stay
+connected — Puraa is asleep between messages by design — and the session drops
+anyway: a logout, the phone offline too long, a protocol change. Each drop means
+re-scanning a QR, on a phone you set up once and left in a drawer, and until you
+do your SMS quietly stop arriving.
+
+The official Business API never needs re-pairing, but isn't open to a personal
+relay — it wants a business account, a spare phone number, approved templates,
+and per-message billing.
+
+Telegram and Discord push to you unprompted, forever, free, with nothing to
+re-pair. If WhatsApp is just where you happen to look, a Telegram channel pinned
+with notifications on gets you the same reflex. Details in
+[ADR-0002](docs/decisions/0002-no-whatsapp-destination.md).
+
 ### Installing the APK
 
 Grab the latest `.apk` from the [Releases](https://github.com/gunasekar/puraa/releases/latest)
