@@ -78,7 +78,15 @@ fun UpdateDialog(
 
     // A failed install is only knowable from the receiver; fold it into the UI
     // so a signing-key mismatch doesn't look like a dialog that did nothing.
+    //
+    // Only an install *this* dialog started may drive the state. Reopening
+    // after a failure composes with the previous outcome still in the flow —
+    // read here before the reset above can land — which would otherwise
+    // replace a fresh "update available" with the stale error.
     LaunchedEffect(outcome) {
+        if (state !is UpdateState.Working && state !is UpdateState.AwaitingConfirmation) {
+            return@LaunchedEffect
+        }
         when (val o = outcome) {
             is UpdateStatus.Outcome.Failed ->
                 state = UpdateState.Failed(o.reason ?: "the install was rejected")
