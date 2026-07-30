@@ -116,8 +116,13 @@ Later APKs are **not** untouched, though. A separate, softer Play Protect check
 fires on every update installed by Puraa itself: *"Play Protect hasn't seen this
 app before"* → **Scan app** → *"This app looks safe"* → **Install**. It keys on
 the APK hash, so each new release trips it, and the APK is uploaded to Google
-for the scan. Observed on a Pixel 8a (Android 16). Not a blocker — but budget
-two extra taps per release, and don't be surprised by it.
+for the scan. Observed on a Pixel 8a (Android 16) on both updates tested, which
+is what confirms it recurs. Not a blocker — but budget two extra taps per
+release, every release, and don't be surprised by it.
+
+Note the asymmetry: Android's own install confirmation stops after Puraa's first
+self-update, but this one never does. Every release you cut costs your users a
+Play Protect scan.
 
 ## Versioning
 

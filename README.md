@@ -116,11 +116,15 @@ Obtainium, no hunting for APKs.
 Android will otherwise refuse the install outright. The update dialog offers a
 shortcut, and Android's refusal also links to it. One-time grant.
 
-After that, expect **Play Protect** on each update: *"Play Protect hasn't seen
-this app before"* → **Scan app** → *"This app looks safe"* → **Install**. It
-recognises apps by their exact file, so every new release is new to it. Two
-extra taps, every time. (On Android 11 and older, Android adds its own install
-confirmation on top — there's no way to skip it on those versions.)
+**That's the only time Android itself asks.** From the second update on, its
+install confirmation is gone for good — Puraa now owns its own package.
+
+**Play Protect is forever, though.** Expect this on every update: *"Play Protect
+hasn't seen this app before"* → **Scan app** → *"This app looks safe"* →
+**Install**. It recognises apps by their exact file, so a new release is always
+new to it. Two taps per update, and there's no way around it short of turning
+Play Protect off. (On Android 11 and older, Android's own confirmation also
+never goes away — no version of that phone can skip it.)
 
 Your relay settings, message history, and permissions are kept throughout —
 tested, nothing to re-enter.

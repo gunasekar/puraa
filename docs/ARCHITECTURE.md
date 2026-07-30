@@ -596,21 +596,23 @@ Android's confirmation Intent directly. A background commit could not do this �
 Android 10+ drops activity starts from a background app — which is the concrete
 mechanism behind the design decision above.
 
-### One tap, then zero — with a caveat
+### Android's dialog: one tap, then none
 
 The **first** self-update needs a confirmation: whoever installed Puraa (adb, a
 file manager) is the *installer of record*, and Android will not let a different
 installer replace an app without asking. Committing it makes Puraa its own
-installer — confirmed in testing, `installerPackageName` flips from `null` to
-`com.puraa` — which is the precondition for later updates applying with no
-dialog.
+installer — `installerPackageName` flips from `null` to `com.puraa`.
 
-**Whether they actually do is unverified.** Testing only ever reached the first
-update, and on a Play Protect device the scan above interposed its own
-confirmation regardless. A truly interaction-free second update requires both
-the installer-of-record condition *and* Play Protect not interrupting, and the
-latter keys on a hash that changes every release. Treat "then zero" as the
-platform's intent, not a measured result, until a second release proves it.
+**From the second update onward that dialog does not appear.** Measured on a
+Pixel 8a (Android 16) across two consecutive real releases: v0.3.0 → v0.4.0
+prompted, v0.4.0 → v0.4.1 did not. The `USER_ACTION_NOT_REQUIRED` +
+update-ownership path works exactly as intended.
+
+**Play Protect does not go away, though.** Its scan (below) still interposes on
+every release, and after the first update it is the *only* remaining
+interaction. So "then zero" is true of Android's own installer and false of the
+end-to-end experience on any device with Play Protect enabled — which is most of
+them. Budget one scan per update, forever.
 
 Two platform details shape this:
 
@@ -647,11 +649,16 @@ safe"* → **Install**. That check keys on the **APK hash**, so a new release
 trips it *every time*, not only on a first install. The APK is uploaded to
 Google as part of the scan.
 
-Observed on a Pixel 8a (Android 16) updating 0.4.0-dirty → 0.4.0. It is a soft
-gate, not the hard "App not installed" block that greets a fresh sideload of an
-SMS app ([RELEASE.md](RELEASE.md#play-protect-blocks-the-first-install)) — but it
-is two extra taps on every update, and it is what actually confirmed the install
-in that test: Android's own install-confirmation dialog never appeared.
+Observed on a Pixel 8a (Android 16) on **both** updates tested — 0.4.0-dirty →
+0.4.0 and 0.4.0 → 0.4.1 — which is what establishes that it recurs rather than
+being a first-install artefact. It is a soft gate, not the hard "App not
+installed" block that greets a fresh sideload of an SMS app
+([RELEASE.md](RELEASE.md#play-protect-blocks-the-first-install)).
+
+It is also the *durable* cost of the design. Android's own confirmation stops
+after the first update; this one does not, because a new release is by
+definition an APK hash Play Protect has never seen. Two taps per release, for
+as long as Puraa is sideloaded.
 
 ### The accepted cost
 

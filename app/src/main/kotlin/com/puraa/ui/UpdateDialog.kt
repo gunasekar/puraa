@@ -172,8 +172,9 @@ private fun StateBody(state: UpdateState) {
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                "Android will ask you to confirm the first time Puraa updates " +
-                    "itself. After that, updates apply as soon as you tap.",
+                "Play Protect will scan the download and ask you to confirm — " +
+                    "it does that for every release. Android may add its own " +
+                    "prompt the first time Puraa updates itself.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

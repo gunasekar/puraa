@@ -36,13 +36,14 @@ import java.util.concurrent.TimeUnit
  * installed Puraa (adb, a file manager, Obtainium) is the installer of record,
  * and Android won't let a different installer replace an app silently. Once
  * Puraa has installed itself once it owns the package, and later updates skip
- * *that* dialog. On Android 11 and older no dialog-free path exists at all, so
- * it appears every time.
+ * *that* dialog — measured across two real releases on a Pixel 8a (Android 16).
+ * On Android 11 and older no dialog-free path exists at all, so it appears
+ * every time.
  *
- * Skipping it is not the same as no interaction. On a device with Play Protect
- * enabled, a separate scan interposes on every release — it keys on the APK
- * hash, so each new build is unseen — and in testing that scan, not Android's
- * installer, was what confirmed the install. See ARCHITECTURE.md §13.
+ * Skipping it is not the same as no interaction. Where Play Protect is enabled,
+ * its scan interposes on *every* release — it keys on the APK hash, so each new
+ * build is unseen — and it does not stop after the first update the way
+ * Android's dialog does. See ARCHITECTURE.md §13.
  */
 class Updater(
     private val context: Context,
