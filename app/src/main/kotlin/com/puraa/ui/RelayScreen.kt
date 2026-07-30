@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -82,6 +84,10 @@ fun RelayScreen(
     var menuOpen by remember { mutableStateOf(false) }
     var confirmStop by remember { mutableStateOf(false) }
     var showQr by remember { mutableStateOf(false) }
+    var showUpdates by remember { mutableStateOf(false) }
+
+    // Re-checked on every ON_RESUME — this is the app's only update trigger.
+    val pendingUpdate by rememberPendingUpdate()
 
     val scope = rememberCoroutineScope()
     val doPush: () -> Unit = {
@@ -118,7 +124,15 @@ fun RelayScreen(
                 ),
                 actions = {
                     IconButton(onClick = { menuOpen = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        // Badged when an update is waiting, so it's visible
+                        // without opening the menu to go looking for it.
+                        if (pendingUpdate != null) {
+                            BadgedBox(badge = { Badge() }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More (update available)")
+                            }
+                        } else {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        }
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(
@@ -126,6 +140,13 @@ fun RelayScreen(
                             onClick = {
                                 menuOpen = false
                                 showQr = true
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Check for updates") },
+                            onClick = {
+                                menuOpen = false
+                                showUpdates = true
                             },
                         )
                         DropdownMenuItem(
@@ -148,6 +169,14 @@ fun RelayScreen(
             verticalArrangement = Arrangement.Top,
         ) {
             RelayStatusCard(destination = Sinks.labelFor(config))
+
+            pendingUpdate?.let { manifest ->
+                Spacer(Modifier.height(12.dp))
+                UpdateAvailableCard(
+                    manifest = manifest,
+                    onUpdate = { showUpdates = true },
+                )
+            }
 
             Spacer(Modifier.height(20.dp))
 
@@ -251,6 +280,10 @@ fun RelayScreen(
                 TextButton(onClick = { confirmStop = false }) { Text("Cancel") }
             },
         )
+    }
+
+    if (showUpdates) {
+        UpdateDialog(onDismiss = { showUpdates = false }, known = pendingUpdate)
     }
 
     if (showQr) {

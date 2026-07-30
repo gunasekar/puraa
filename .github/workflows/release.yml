@@ -63,6 +63,36 @@ jobs:
             echo "apksigner not found on runner; skipping explicit verify"
           fi
 
+      # The self-update manifest (see app/src/main/kotlin/com/puraa/update/).
+      # Installed copies of Puraa poll releases/latest/download/update.json,
+      # so this asset is what makes a release reach phones already in the
+      # field. versionCode/versionName come from the same git facts the build
+      # stamped into the APK, and the digest is taken from the very file that
+      # gets uploaded — so the manifest cannot describe a different APK.
+      # Tags only: an untagged workflow_dispatch build has no release to
+      # point at, and publishing a manifest for it would be a lie.
+      - name: Write update.json (self-update manifest)
+        if: github.ref_type == 'tag'
+        env:
+          APK_FILE: ${{ steps.apk.outputs.file }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          VER=$(git describe --tags --always | sed 's/^v//')
+          CODE=$(git rev-list --count HEAD)
+          SHA=$(sha256sum "$APK_FILE" | cut -d' ' -f1)
+          SIZE=$(stat -c%s "$APK_FILE")
+          cat > update.json <<EOF
+          {
+            "versionCode": $CODE,
+            "versionName": "$VER",
+            "apk": "https://github.com/$REPO/releases/download/$TAG/$APK_FILE",
+            "sha256": "$SHA",
+            "size": $SIZE
+          }
+          EOF
+          cat update.json
+
       - name: Clean up signing material
         if: always()
         run: rm -f keystore.properties "$RUNNER_TEMP/release.keystore"
@@ -80,6 +110,6 @@ jobs:
           APK_FILE: ${{ steps.apk.outputs.file }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
-            && gh release upload "$GITHUB_REF_NAME" "$APK_FILE" --clobber \
-            || gh release create "$GITHUB_REF_NAME" "$APK_FILE" \
+            && gh release upload "$GITHUB_REF_NAME" "$APK_FILE" update.json --clobber \
+            || gh release create "$GITHUB_REF_NAME" "$APK_FILE" update.json \
                  --title "$GITHUB_REF_NAME" --notes "Signed release APK built by CI."

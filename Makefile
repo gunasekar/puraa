@@ -79,8 +79,9 @@ run: install launch ## Build, install, and launch
 # Puraa registers no deep link, so nothing can provision it remotely.
 
 .PHONY: logcat
-logcat: ## Tail Puraa logs (relay pipeline tags)
-	$(ADB) logcat -v time SmsReceiver:D RelayWorker:D TelegramClient:D OutboxRepository:D '*:S'
+logcat: ## Tail Puraa logs (relay pipeline + updater tags)
+	$(ADB) logcat -v time SmsReceiver:D RelayWorker:D TelegramClient:D OutboxRepository:D \
+		Updater:D InstallResult:D '*:S'
 
 .PHONY: uninstall
 uninstall: ## Remove the app from the device

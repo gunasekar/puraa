@@ -12,5 +12,9 @@ class PuraaApplication : Application() {
         // We only pre-create the notification channel the worker uses
         // for its brief foreground window on Android < 12.
         RelayNotifications.ensureChannel(this)
+
+        // Nothing is registered here for updates by design: Puraa checks for a
+        // new release only when the app is opened (see ui/UpdatePrompt.kt), so
+        // there is no background work and no notification channel of its own.
     }
 }

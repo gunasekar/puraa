@@ -26,6 +26,17 @@
 
     <!-- Camera is used only to scan a setup QR code (optional feature). -->
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Puraa is sideloaded, so it updates itself from its own GitHub
+         Releases (see update/Updater.kt). REQUEST_INSTALL_PACKAGES lets it
+         drive a PackageInstaller session; UPDATE_PACKAGES_WITHOUT_USER_ACTION
+         lets the *second* and later updates skip the confirmation dialog,
+         once Puraa is the installer of record for itself. Both are normal
+         permissions — neither prompts. Only Puraa's own package is ever
+         installed: the APK must be signed with the release key or Android
+         rejects it. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
@@ -73,6 +84,13 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
+
+        <!-- Where PackageInstaller reports the outcome of a self-update.
+             Not exported: the updater targets it by class, and nothing
+             outside Puraa has any business reaching it. -->
+        <receiver
+            android:name=".update.InstallResultReceiver"
+            android:exported="false" />
 
         <!-- The zxing scanner (CaptureActivity) ships locked to landscape in
              the library's manifest. Puraa's setup QR is scanned holding the

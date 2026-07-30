@@ -38,7 +38,8 @@ install and nothing to host.
   no polling. The app is dormant between messages and only does work — for
   about a second — when an SMS needs forwarding.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the internal design.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the internal design, and
+[docs/decisions/](docs/decisions/) for the reasoning behind the big calls.
 
 ## Setup
 
@@ -73,7 +74,8 @@ sideloaded app:
 1. **Let the installing app install apps.** Chrome, Files — whichever you tap
    the `.apk` from. **Settings → Apps → Special app access → Install unknown
    apps →** pick it **→ Allow from this source**. *Switch it back off after —
-   re-grant briefly for each update.*
+   later versions are installed by Puraa itself, not by Chrome, so this grant
+   is only for getting the first APK onto the phone.*
 2. **Turn Play Protect off.** It blocks the first install of a sideloaded SMS
    app, usually as a bare "App not installed". **Play Store → profile → Play
    Protect → ⚙ → Scan apps with Play Protect: off.** *Turn it back on after —
@@ -101,12 +103,43 @@ If the ⋮ menu doesn't show that option yet, open Puraa and tap the SMS button
 once so the system records a blocked attempt, then return to App info — the
 entry appears afterwards. Installing over `adb` avoids this step entirely.
 
+#### Updates
+
+That's the only install you have to do by hand. **Every time you open Puraa it
+checks its own [Releases](https://github.com/gunasekar/puraa/releases/latest)**;
+if there's a newer version you get a card on the main screen and a dot on the ⋮
+menu. Tap **Update now** and it downloads, verifies, and installs. No store, no
+Obtainium, no hunting for APKs.
+
+**The first update asks you to confirm**, because until then Android considers
+Chrome (or `adb`) the app that installed Puraa, and it won't let one installer
+silently replace another's app. Tap through it once and Puraa owns itself from
+then on — after that "Update now" installs with no dialog. Your relay settings
+are kept either way. (On Android 11 and older there's no dialog-free path at
+all, so you'll confirm each time.)
+
+Android may also ask you to allow **Puraa** to install apps that first time —
+the same "Install unknown apps" screen as guard 1, but for Puraa rather than
+Chrome. The update dialog offers a shortcut to it. Like the others, a one-time
+grant.
+
+You can also check any time via **⋮ menu → Check for updates**, which tells you
+when you're already on the latest release.
+
+**Puraa never updates itself in the background.** Nothing is downloaded or
+installed unless you tap. The flip side, and it's a real one: **a relay phone
+you never open never updates.** It keeps forwarding SMS on whatever version it
+has, indefinitely. Open the app every so often if you want fixes — that is the
+one thing the relay can't do for you. (This was a deliberate trade; see
+[ADR-0001](docs/decisions/0001-in-app-only-self-update.md).)
+
 ### On the phone to be relayed
 
 With the app installed (above), open it once, choose **Telegram** or **Discord**, enter the
 matching credentials above, add a device name and an optional sender whitelist
-(e.g. `HDFCBK,ICICIB,CRED`), and grant SMS access. That's it — the app never
-has to be opened again.
+(e.g. `HDFCBK,ICICIB,CRED`), and grant SMS access. That's it — **forwarding needs
+no further attention**: no re-opening, no restart, no permission re-grant. The
+only reason to open Puraa again is to pick up an update ([above](#updates)).
 
 To skip the typing, **scan a setup QR** instead. Generate one on the
 [Puraa website](https://gunasekar.github.io/puraa/) — pick Telegram or Discord,

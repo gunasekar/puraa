@@ -44,6 +44,25 @@ fun openAppSettings(context: Context) {
     }
 }
 
+/**
+ * Open the "Install unknown apps" page **for Puraa itself**.
+ *
+ * Distinct from the same page for Chrome or Files, which is what gets the APK
+ * onto the phone the first time (README, guard 1). This one governs whether
+ * Puraa may install *its own* updates. `REQUEST_INSTALL_PACKAGES` in the
+ * manifest is only half of it — the other half is this user-granted app op,
+ * surfaced by [android.content.pm.PackageManager.canRequestPackageInstalls].
+ */
+fun openInstallUnknownAppsSettings(context: Context) {
+    runCatching {
+        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+            data = "package:${context.packageName}".toUri()
+            if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }
+}
+
 /** Ask to be exempt from battery optimisation so sends stay prompt when idle. */
 fun requestBatteryExemption(context: Context) {
     val pm = ContextCompat.getSystemService(context, PowerManager::class.java) ?: return

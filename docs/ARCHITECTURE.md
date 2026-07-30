@@ -1,8 +1,8 @@
 # Puraa — Architecture
 
 This document explains what Puraa is scoped to do and *how* it works internally. All decisions described
-here are revisable; significant ones should be lifted into `docs/decisions/`
-ADRs as they harden.
+here are revisable; significant ones should be lifted into
+[`docs/decisions/`](decisions/) ADRs as they harden.
 
 ---
 
@@ -64,6 +64,9 @@ message, a few times a day.
 - **Shared-channel routing.** Any number of relay phones can post into one
   channel; each forwarded message carries the relay's device name for
   attribution.
+- **In-app update from GitHub Releases** (§13). With no store to push updates,
+  the app checks its own releases **when it is opened** and installs on a tap.
+  No background checks, no silent installs.
 
 ### Non-goals
 
@@ -89,8 +92,10 @@ Objective, testable outcomes for a healthy install:
 
 1. **Latency** — every matching SMS that arrives on the source phone appears in
    the destination channel within ~30 seconds.
-2. **Zero-touch** — after the one-time setup, the source phone needs no
-   re-opening, restart, or permission re-grant.
+2. **Zero-touch relaying** — after the one-time setup, forwarding needs no
+   re-opening, restart, or permission re-grant. Scoped to *relaying* on purpose:
+   picking up a new version does require opening the app, since there is no
+   background updater (§13, [ADR-0001](decisions/0001-in-app-only-self-update.md)).
 3. **Zero footprint** — no noticeable impact on the source phone's performance
    or battery: no always-on service, persistent notification, or polling.
 4. **Filter fidelity** — no non-matching SMS is forwarded, unless the install
@@ -267,7 +272,7 @@ what's on the wire is what the reader sees in Telegram.
 ```
 com.puraa
 ├── MainActivity            # Compose host: relay setup ↔ relay status
-├── PuraaApplication      # Creates the worker's notification channel
+├── PuraaApplication      # Creates notification channels; schedules the update check
 ├── config/
 │   ├── ConfigStore         # EncryptedSharedPreferences — destination + its params, filter, device
 │   ├── Destination         # TELEGRAM | DISCORD (exactly one active)
@@ -291,9 +296,16 @@ com.puraa
 │   └── DiscordClient       # OkHttp wrapper over a channel webhook POST
 ├── envelope/
 │   └── Envelope            # Plaintext wire format (same text for either destination)
+├── update/
+│   ├── UpdateManifest      # Parsed `update.json` (versionCode, APK URL, SHA-256)
+│   ├── Updater             # Check → stream into a PackageInstaller session → verify → commit
+│   ├── InstallResultReceiver # PackageInstaller callback: opens the confirm dialog
+│   └── UpdateStatus        # In-memory flow carrying the install outcome back to the UI
 └── ui/
     ├── RelaySetupScreen    # Setup form (destination toggle) + QR scan
     ├── RelayScreen         # Running status, stat tiles, "push last 15 min"
+    ├── UpdatePrompt        # ON_RESUME check + the "update available" card
+    ├── UpdateDialog        # The whole update flow: check, download, verify, install
     ├── StatusPill          # Active / Inactive status pill (both screens)
     ├── RelayPermissions    # Runtime-permission + battery-exemption helpers
     └── theme/              # Color, Theme, Type
@@ -307,7 +319,7 @@ com.puraa
   Security): the active destination and its secrets — Telegram bot token +
   channel id, or the Discord webhook URL — plus the sender whitelist, relay
   device name, and a `relayActive` flag (whether the relay is running or
-  paused — see §11).
+  paused — see §11). Nothing about updates is persisted — see §13.
 - **Room / SQLite** (`puraa.db`): the `outbox` table. Pending rows survive
   reboots; a failed row backs off and is parked as `FAILED` after `MAX_ATTEMPTS`
   (6) so it can't block the queue; the last **20 terminal rows** (`SENT` and
@@ -454,13 +466,177 @@ an in-person QR scan, full stop.
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC` | WorkManager's brief foreground window for expedited sends on Android < 12. |
 | `POST_NOTIFICATIONS` | Show that brief foreground notification on Android 13+. |
 | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Keep sends prompt on idle phones (optional). |
+| `REQUEST_INSTALL_PACKAGES` | Drive the `PackageInstaller` session that installs Puraa's own updates (§13). |
+| `UPDATE_PACKAGES_WITHOUT_USER_ACTION` | Let the *second* and later self-updates skip the confirmation dialog (§13). |
+
+Both install permissions are **normal** permissions — neither prompts, and
+neither can install anything but Puraa: an APK not signed with the release key
+is rejected by the platform.
+
+`REQUEST_INSTALL_PACKAGES` is only half of what's needed, though. The other half
+is the user-granted **"Install unknown apps"** app op, readable via
+`PackageManager.canRequestPackageInstalls()`. The update dialog surfaces a
+shortcut to that settings page when the op is missing, but treats it as a hint
+rather than a gate — an app updating its own package may be exempt from the
+check, and refusing to try would then block a flow that would have worked.
 
 Notably **not** requested: notification-listener access and
 `RECEIVE_BOOT_COMPLETED`.
 
 ---
 
-## 13. Threat model (brief)
+
+## 13. In-app update
+
+Puraa is sideloaded, so nothing else will ever update it. The app therefore
+ships its own release checker — but **only an in-app one**. There is no
+background work, no notification channel, and nothing installs unasked.
+
+> Recorded as [ADR-0001](decisions/0001-in-app-only-self-update.md), including the
+> alternatives that were rejected and the one that was deferred.
+
+### Why not a background updater
+
+The first cut of this was a daily `WorkManager` check that downloaded and
+silently installed. It was removed, for two reasons.
+
+The first is that on any phone where the install can't be silent — Android 11
+and older, and the first update on *every* phone — a background check's only
+possible output is a notification. Notifications get swiped, muted, and batched,
+and once one is gone there is no trace that an update was waiting. That is the
+worst of both worlds: background machinery whose single deliverable is the least
+reliable surface Android offers.
+
+The second is trust. Silent self-installation of an app holding `RECEIVE_SMS` is
+a large amount of authority to hold, and it buys little when the operator can
+approve an update in two taps.
+
+So Puraa follows the shape Google's own [in-app updates
+guidance](https://developer.android.com/guide/playcore/in-app-updates/kotlin-java)
+prescribes: **check at every app entry point**, and let the user drive.
+
+### The manifest, not the tag
+
+CI attaches an `update.json` asset to every GitHub Release
+(`.github/workflows/release.yml`):
+
+```json
+{
+  "versionCode": 128,
+  "versionName": "0.3.0",
+  "apk": "https://github.com/gunasekar/puraa/releases/download/v0.3.0/puraa-0.3.0.apk",
+  "sha256": "…",
+  "size": 9123456
+}
+```
+
+The app fetches it from
+`https://github.com/gunasekar/puraa/releases/latest/download/update.json` — a
+permanent redirect to that asset on the newest release. That URL is a plain
+download, **not** the GitHub API: no 60-request/hour rate limit and no API
+response shape to keep up with.
+
+`versionCode` is the same monotonic commit count the build stamps into the APK
+(see [RELEASE.md](RELEASE.md#versioning)), so "is there something newer?" is one
+integer comparison against `PackageInfo.longVersionCode`. No tag-string parsing,
+no SemVer edge cases. Unknown JSON keys are ignored so a future release can add
+fields without becoming unreadable to builds already in the field — a manifest
+an old build can't parse is a build that can never update again.
+
+### The flow
+
+```mermaid
+flowchart TD
+    R["App opened / resumed (ON_RESUME)"] --> C["GET update.json"]
+    C -->|"versionCode ≤ installed, or offline"| D["Nothing shown"]
+    C -->|newer| B["Card on RelayScreen, badge on the ⋮ menu"]
+    B --> T["User taps Update now"]
+    T --> S["Stream APK → PackageInstaller session"]
+    S --> V{"SHA-256 matches?"}
+    V -->|no| X["Abandon session, report in the dialog"]
+    V -->|yes| K[commit]
+    K --> P{"Puraa owns the package?"}
+    P -->|yes| I["Installs immediately, no dialog"]
+    P -->|"no, first time"| Q["Android's confirm dialog, opened directly"]
+```
+
+Nothing about updates is persisted. A cached "update available" would outlive the
+conditions that made it true (offline, or installed by hand), and the check is a
+few hundred bytes of JSON — so it is simply re-run on every resume. If the
+network is down, no card appears, which is correct: there is nothing that could
+be installed anyway.
+
+The APK is streamed **into** the install session rather than to a cache file and
+copied: one pass, no temp file to clean up, and the digest is computed from the
+very bytes that were written. A session is only staging — `commit()` is the one
+irreversible step, and a digest mismatch abandons the session before it. Any
+session left over from an abandoned attempt is discarded before a new one
+starts, so they can't accumulate.
+
+### The card is not dismissible
+
+Deliberately. It is regenerated from a live check on every resume, so the only
+way to clear it is to update. This is the one thing the notification-based
+design got wrong, and the reason the surface moved in-app.
+
+### Why the confirm dialog can be shown at all
+
+Because the commit always happens with the app in the foreground.
+`InstallResultReceiver` receives `STATUS_PENDING_USER_ACTION` and launches
+Android's confirmation Intent directly. A background commit could not do this —
+Android 10+ drops activity starts from a background app — which is the concrete
+mechanism behind the design decision above.
+
+### One tap, then zero
+
+The **first** self-update always shows Android's confirmation dialog: whoever
+installed Puraa (adb, a file manager) is the *installer of record*, and Android
+will not let a different installer replace an app without asking. Committing it
+makes Puraa its own installer, after which "Update now" installs with no dialog
+at all.
+
+Two platform details shape this:
+
+- `setRequireUserAction(USER_ACTION_NOT_REQUIRED)` is **API 31**. On Android 11
+  and older there is no silent path at all — every update shows the dialog,
+  forever. `minSdk` is 26, so this is a live case, not a hypothetical.
+- **Android 14 update ownership.** On 14+ a dialog-free install requires the
+  installer to *own* the package, not merely to have installed it, so the session
+  also calls `setRequestUpdateOwnership(true)`. Ownership transfers on that first
+  confirmed install. It locks out any other updater — which costs nothing here,
+  because Play Store policy reserves SMS permissions for default SMS handlers, so
+  Puraa can never ship there (§2).
+
+### What is trusted
+
+| Layer | Guarantee |
+| --- | --- |
+| HTTPS to `github.com` | The manifest, and the digest inside it, arrive untampered. |
+| SHA-256 in the manifest | The downloaded APK is byte-identical to the one CI built and hashed. |
+| **Release signing key** | The real anchor. An APK not signed by Puraa's key fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. A forged manifest can waste a download; it can never install foreign code. |
+
+### Permission to install at all
+
+Separate from the confirmation dialog: Android also requires the user to have
+allowed **Puraa itself** to install apps ("Install unknown apps" → Puraa), which
+is a different grant from the one Chrome needs to deliver the first APK. §12
+covers why this is surfaced as a hint rather than enforced as a gate.
+
+### The accepted cost
+
+Updates now require someone to **open the app**. A relay phone left in a drawer
+will keep forwarding SMS indefinitely on whatever build it has — relaying is
+zero-touch (§3 criterion 2), updating is not. This is a deliberate trade of reach
+for simplicity and trust, and it is the one success-criterion tension in the
+design. Operators should open Puraa occasionally.
+
+Self-update is compiled out of debug builds (`BuildConfig.SELF_UPDATE_ENABLED`).
+A debug build is `com.puraa.debug` signed with the debug key, so a release APK
+could never install over it.
+
+---
+
+## 14. Threat model (brief)
 
 Puraa is a convenience tool, not a security product. In plaintext mode:
 
@@ -471,6 +647,7 @@ Puraa is a convenience tool, not a security product. In plaintext mode:
 | Malicious app or QR injecting config | **Mitigated** — a QR only *pre-fills* the setup screen; config is written solely by an explicit user Save; there is no deep link at all; Discord webhooks are host-validated to a Discord host (`discord.com` / `discordapp.com`). |
 | Secret (bot token / webhook URL) leaked from the APK or a shared QR | Partial — an attacker could post to / drain the channel. Rotate the bot token via `@BotFather` or regenerate the Discord webhook. |
 | Physical access to a rooted phone | **No** — the secret and queued/recent messages are on the device. |
+| Malicious APK pushed through the self-updater (§13) | **Mitigated** — HTTPS manifest, SHA-256 pin, and above all the release signing key: an APK signed by anyone else is rejected by the platform. Compromise of the signing key itself is not covered — see [RELEASE.md](RELEASE.md#-back-up-the-keystore). |
 
 The main practical risk is **secret leakage** (bot token or webhook URL),
 not broken transport — especially via a shared setup QR. Keep the channel

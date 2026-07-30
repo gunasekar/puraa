@@ -49,6 +49,52 @@ never ship an update that installs over an existing `com.puraa` — users would
 have to uninstall and reinstall. Keep a copy somewhere safe and independent of
 this machine.
 
+It is also what makes the self-updater safe to trust: every installed copy of
+Puraa will only accept an APK signed with this key. Guard it accordingly.
+
+## update.json — how a release reaches existing phones
+
+Publishing the APK is only half a release. Installed copies of Puraa read
+`releases/latest/download/update.json` **each time the app is opened**, so the
+**`update.json` asset is what makes a release reachable from phones already in
+the field**. CI writes and uploads it alongside the APK
+(`.github/workflows/release.yml`) — the digest is taken from the very file that
+gets uploaded, so the manifest can't describe a different APK.
+
+```json
+{
+  "versionCode": 128,
+  "versionName": "0.3.0",
+  "apk": "https://github.com/gunasekar/puraa/releases/download/v0.3.0/puraa-0.3.0.apk",
+  "sha256": "…",
+  "size": 9123456
+}
+```
+
+Two things to know:
+
+- **It's tags only.** A manual `workflow_dispatch` build has no release to point
+  at, so no manifest is written — that build reaches nobody automatically.
+- **`latest` skips prereleases.** Marking a release as a prerelease keeps it
+  away from the updater; promote it to make it the one phones pick up.
+
+See [ARCHITECTURE.md §13](ARCHITECTURE.md#13-in-app-update) for the mechanism.
+Two things worth remembering when you cut a release: nobody gets it until they
+**open the app** (there is no background check by design), and the first
+self-update on any phone shows a confirmation dialog, because until then
+something else (adb, a file manager) is the installer of record.
+
+### One dev-workflow consequence
+
+On the first self-update Puraa claims **update ownership** (Android 14+), which
+is what keeps later updates silent. The flip side: on such a phone, pushing a
+release build over it from your machine — `make install BUILD=release` — can be
+refused or forced to prompt, because adb is no longer the update owner. Uninstall
+first (`make uninstall`) if you hit it.
+
+Day-to-day development is unaffected: `make install` builds the **debug**
+variant, which is `com.puraa.debug` — a separate package that never self-updates.
+
 ## Play Protect blocks the first install
 
 Play Protect's enhanced fraud protection refuses sideloaded APKs declaring any

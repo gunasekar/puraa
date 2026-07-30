@@ -41,6 +41,16 @@ android {
         targetSdk = 35
         versionCode = gitVersionCode
         versionName = gitVersionName
+
+        // Where the self-updater looks for `update.json` (see
+        // com.puraa.update.Updater). `releases/latest/download/<asset>` is a
+        // permanent redirect to that asset on the newest release, so there is
+        // no GitHub API call, no rate limit, and no API shape to track.
+        buildConfigField(
+            "String",
+            "UPDATE_MANIFEST_URL",
+            "\"https://github.com/gunasekar/puraa/releases/latest/download/update.json\"",
+        )
     }
 
     signingConfigs {
@@ -65,10 +75,14 @@ android {
             if (hasReleaseKeystore) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            buildConfigField("boolean", "SELF_UPDATE_ENABLED", "true")
         }
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
+            // A debug build is `com.puraa.debug` signed with the debug key, so
+            // a release APK could never install over it. Don't even check.
+            buildConfigField("boolean", "SELF_UPDATE_ENABLED", "false")
         }
     }
 
