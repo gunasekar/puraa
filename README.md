@@ -47,10 +47,14 @@ Pick **one** destination — Telegram *or* Discord — and get its credentials.
 
 ### Telegram
 
-1. In `@BotFather`, create a bot and save its token.
+1. In `@BotFather`, send `/newbot` and save the token it replies with.
 2. Create a private channel and add the bot as an admin with **Post
-   Messages** enabled.
-3. Capture the channel id (e.g. `-1001234567890`) and subscribe to the
+   Messages** enabled and every other permission off — posting is all
+   Puraa needs.
+3. Capture the channel id: open the channel on
+   [web.telegram.org](https://web.telegram.org) and read it out of the
+   address bar (`#-3491234567`). Private channels are addressed with a
+   `-100` prefix, so that one is `-1003491234567`. Subscribe to the
    channel in your own Telegram app.
 
 You'll enter the **bot token** and **channel id** in the app.

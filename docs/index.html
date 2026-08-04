@@ -366,18 +366,41 @@
     .field input::placeholder { color: var(--ink-faint); }
     .field input:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
     .field .hint { margin-top: 6px; font-size: 12.5px; color: var(--ink-faint); }
+    .field .hint.resolved { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+    .field .hint.resolved.warn { color: #e5847a; }
+    :root[data-theme="light"] .field .hint.resolved.warn { color: #c0392b; }
     .field .hint code, code.k { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); color: var(--on-accent-soft); padding: 1px 6px; border-radius: 5px; }
     [hidden] { display: none !important; }
 
-    /* "Find from token" — pull the bot's recent channels via getUpdates */
+    /* "Find it for me" — pull the bot's recent channels via getUpdates */
     .find-btn {
-      font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: none;
-      color: var(--accent); background: transparent; border: 1px solid var(--line);
-      border-radius: 999px; padding: 3px 10px; cursor: pointer;
-      transition: color .16s, border-color .16s, background .16s, opacity .16s;
+      position: relative;
+      font-family: var(--body); font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--on-accent-soft); background: var(--accent-soft);
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      border-radius: 999px; padding: 5px 12px; cursor: pointer;
+      transition: color .16s, border-color .16s, background .16s, opacity .16s, filter .16s;
     }
-    .find-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--on-accent-soft); }
+    .find-btn svg { width: 13px; height: 13px; flex: none; }
+    .find-btn:hover { border-color: var(--accent); filter: brightness(1.08); }
+    :root[data-theme="light"] .find-btn:hover { background: color-mix(in srgb, var(--accent) 18%, var(--accent-soft)); filter: none; }
     .find-btn:disabled { opacity: .5; cursor: progress; }
+    /* hover tip — the precondition the lookup can't enforce for you */
+    .find-btn::after {
+      content: attr(data-tip);
+      position: absolute; bottom: calc(100% + 9px); right: 0;
+      width: max-content; max-width: 250px;
+      font-family: var(--body); font-size: 12px; font-weight: 400; line-height: 1.5;
+      letter-spacing: 0; text-transform: none; text-align: left; color: var(--ink-dim);
+      background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+      padding: 9px 11px; box-shadow: 0 20px 40px -24px rgba(0,0,0,.85);
+      opacity: 0; visibility: hidden; transform: translateY(3px);
+      transition: opacity .16s ease, transform .16s ease, visibility .16s;
+      pointer-events: none; z-index: 5;
+    }
+    .find-btn:hover::after, .find-btn:focus-visible::after { opacity: 1; visibility: visible; transform: none; }
+    .find-btn:disabled::after { display: none; }
     .ch-results { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
     .ch-opt {
       display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%;
@@ -443,6 +466,39 @@
     .scan-hint .n { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600; flex: none; margin-top: 1px; }
     .scan-hint p { font-size: 13.5px; color: var(--ink-dim); }
     .scan-hint b { color: var(--ink); }
+
+    /* credentials walkthrough — sits under the fields it explains, and swaps
+       with the destination */
+    .config-left { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+    .guide {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+      padding: clamp(22px, 3vw, 30px);
+    }
+    .guide-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .guide-head h3 { font-family: var(--display); font-weight: 700; font-size: 19px; letter-spacing: -0.02em; }
+    .guide-head .once { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); }
+    .steps { list-style: none; margin-top: 20px; display: flex; flex-direction: column; gap: 18px; }
+    .steps li { position: relative; display: grid; grid-template-columns: 26px 1fr; gap: 14px; }
+    /* dotted connector — the same flight-line motif as the footer, upright */
+    .steps li:not(:last-child)::before {
+      content: ""; position: absolute; left: 12px; top: 32px; bottom: -18px; width: 1.4px;
+      background-image: radial-gradient(circle at center, var(--accent) 1.1px, transparent 1.5px);
+      background-size: 1.4px 9px; background-repeat: repeat-y;
+      opacity: .38;
+    }
+    .steps .pn {
+      width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none;
+      font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+      background: var(--accent-soft); color: var(--on-accent-soft);
+      border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+    }
+    .steps h4 { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; padding-top: 3px; }
+    .steps p { font-size: 13.5px; color: var(--ink-dim); margin-top: 5px; }
+    .steps p + p { margin-top: 9px; }
+    .steps b { color: var(--ink); font-weight: 600; }
+    .steps code { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); color: var(--on-accent-soft); padding: 1px 6px; border-radius: 5px; word-break: break-word; }
+    .steps a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .steps a:hover { border-bottom-color: var(--accent); }
 
     /* ---------- install (dark again) ---------- */
     /* last content section: it owns a bottom tail (nothing after it but the
@@ -598,6 +654,7 @@ At:     08 Jul 2026, 05:31 PM</div>
 
         <div class="config-grid">
           <!-- form -->
+          <div class="config-left">
           <div class="form-card reveal">
             <div class="seg" role="tablist" aria-label="Destination">
               <button id="tab-tg" role="tab" aria-selected="true"><span class="dotico"></span>Telegram</button>
@@ -608,12 +665,19 @@ At:     08 Jul 2026, 05:31 PM</div>
               <div class="field">
                 <label for="bot">Bot token</label>
                 <input id="bot" type="text" autocomplete="off" placeholder="1234567890:AAH…" />
-                <div class="hint">From <code class="k">@BotFather</code> — the bot that posts to your channel.</div>
+                <div class="hint">The token <code class="k">@BotFather</code> gives you when you create a bot.</div>
               </div>
               <div class="field">
-                <label for="ch">Channel id <button type="button" id="find-ch" class="find-btn">Find from token</button></label>
-                <input id="ch" type="text" autocomplete="off" inputmode="numeric" placeholder="-1001234567890" />
-                <div class="hint">Your private channel id — a negative number.</div>
+                <label for="ch">Channel id
+                  <button type="button" id="find-ch" class="find-btn"
+                          data-tip="Add the bot to the channel first, then post any message there — that's what makes the channel findable.">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+                    Find it for me
+                  </button>
+                </label>
+                <input id="ch" type="text" autocomplete="off" placeholder="-1001234567890" />
+                <div class="hint">Paste the number or the whole <code class="k">web.telegram.org</code> address — the <code class="k">-100</code> prefix gets added for you.</div>
+                <div class="hint resolved" id="ch-resolved" hidden></div>
                 <div class="ch-results" id="ch-results" hidden></div>
               </div>
             </div>
@@ -636,6 +700,64 @@ At:     08 Jul 2026, 05:31 PM</div>
               <span class="n">↗</span>
               <p>On the relay phone, open Puraa and tap <b>Scan setup QR code</b>. Point it at the pass — the fields fill in for you to review.</p>
             </div>
+          </div>
+
+          <!-- where the values above come from -->
+          <div class="guide reveal">
+            <div class="guide-head">
+              <h3 id="guide-title">Where the Telegram values come from</h3>
+              <span class="once">One-time setup</span>
+            </div>
+
+            <ol class="steps" id="steps-tg">
+              <li>
+                <span class="pn">1</span>
+                <div>
+                  <h4>Create your bot</h4>
+                  <p>In Telegram, open <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> and send <code>/newbot</code>. Give it a name and a username ending in <code>bot</code>. It replies with a token like <code>1234567890:AAH…</code> — that goes in <b>Bot token</b> above.</p>
+                </div>
+              </li>
+              <li>
+                <span class="pn">2</span>
+                <div>
+                  <h4>Create a private channel</h4>
+                  <p>New Message → <b>New Channel</b>, name it, then choose <b>Private</b>. This is where your texts land — keep it to yourself, or add whoever else should see them.</p>
+                </div>
+              </li>
+              <li>
+                <span class="pn">3</span>
+                <div>
+                  <h4>Add the bot to that channel</h4>
+                  <p>Channel → <b>Administrators → Add Admin</b> → search your bot's username. Add it with <b>Post Messages</b> on and every other permission off — posting is all Puraa needs.</p>
+                </div>
+              </li>
+              <li>
+                <span class="pn">4</span>
+                <div>
+                  <h4>Copy the channel id</h4>
+                  <p>Post any message in the channel, then hit <b>Find it for me</b> above and pick it from the list — it reads what the bot has seen, so that message has to come after step 3.</p>
+                  <p>Nothing listed? Open the channel on <a href="https://web.telegram.org" target="_blank" rel="noopener">web.telegram.org</a>: the address bar ends in something like <code>#-3491234567</code>. Paste that number above and it becomes <code>-1003491234567</code>.</p>
+                </div>
+              </li>
+            </ol>
+
+            <ol class="steps" id="steps-dc" hidden>
+              <li>
+                <span class="pn">1</span>
+                <div>
+                  <h4>Open the channel's webhooks</h4>
+                  <p>In Discord, pick the channel your texts should land in: <b>Edit Channel → Integrations → Webhooks</b>. You need <b>Manage Webhooks</b> on that server.</p>
+                </div>
+              </li>
+              <li>
+                <span class="pn">2</span>
+                <div>
+                  <h4>Make one and copy its URL</h4>
+                  <p><b>New Webhook</b>, name it something like <code>Puraa</code>, then <b>Copy Webhook URL</b>. Paste it above — no bot and no ids needed.</p>
+                </div>
+              </li>
+            </ol>
+          </div>
           </div>
 
           <!-- ticket -->
@@ -728,15 +850,43 @@ At:     08 Jul 2026, 05:31 PM</div>
       frame: $('qr-frame'), empty: $('qr-empty'),
       payload: $('payload'), dl: $('dl-btn'), copy: $('copy-btn'), copied: $('copied'),
       kind: $('tk-kind'), dDest: $('d-dest'), dFilter: $('d-filter'),
-      findCh: $('find-ch'), chResults: $('ch-results'),
+      findCh: $('find-ch'), chResults: $('ch-results'), chResolved: $('ch-resolved'),
+      guideTitle: $('guide-title'), stepsTg: $('steps-tg'), stepsDc: $('steps-dc'),
     };
+
+    /* ---- channel id ----
+       Telegram addresses a private channel as -100 + the internal id shown in
+       web.telegram.org's URL hash, so accept either form and fill the prefix in.
+       A finished id is -100 + ~10 digits, a raw one ~10, so length tells them
+       apart. */
+    function normalizeChannelId(raw) {
+      let s = String(raw).trim();
+      const hash = s.match(/#(-?\d+)/);
+      if (hash) s = hash[1];
+      s = s.replace(/[\s,]/g, '');
+      if (!/^-?\d+$/.test(s)) return null;
+      const digits = s.replace(/^-/, '');
+      if (!digits) return null;
+      return (digits.length > 10 && digits.startsWith('100')) ? '-' + digits : '-100' + digits;
+    }
+
+    /* Ids picked from the lookup come from Telegram itself, and may be a plain
+       group (-1234567, no -100), so pass those through untouched. */
+    let chVerbatim = false;
+
+    function channelId() {
+      const raw = els.ch.value.trim();
+      if (!raw) return null;
+      if (chVerbatim && /^-?\d+$/.test(raw)) return raw;
+      return normalizeChannelId(raw);
+    }
 
     function buildPayload() {
       const filter = els.filter.value.trim();
       const withFilter = (lines) => filter ? lines.concat('filter=' + filter) : lines;
       if (dest === 'tg') {
-        const bot = els.bot.value.trim(), ch = els.ch.value.trim();
-        if (!bot || !ch || !/^-?\d+$/.test(ch)) return null;
+        const bot = els.bot.value.trim(), ch = channelId();
+        if (!bot || !ch) return null;
         return [HEADER].concat(withFilter(['bot=' + bot, 'ch=' + ch])).join('\n');
       } else {
         const webhook = els.webhook.value.trim();
@@ -769,8 +919,22 @@ At:     08 Jul 2026, 05:31 PM</div>
       els.dFilter.textContent = filter || 'all senders';
       els.dFilter.classList.toggle('muted', !filter);
       if (dest === 'tg') {
-        const ch = els.ch.value.trim();
-        els.dDest.textContent = ch ? ('Telegram · ' + ch) : 'Telegram';
+        const raw = els.ch.value.trim(), id = channelId();
+        els.dDest.textContent = id ? ('Telegram · ' + id) : 'Telegram';
+        // show what the pasted value resolved to, so it stays checkable
+        if (!raw) {
+          els.chResolved.hidden = true;
+        } else if (!id) {
+          els.chResolved.hidden = false;
+          els.chResolved.classList.add('warn');
+          els.chResolved.textContent = 'Not a channel id yet.';
+        } else if (id !== raw) {
+          els.chResolved.hidden = false;
+          els.chResolved.classList.remove('warn');
+          els.chResolved.textContent = 'Reads as ' + id;
+        } else {
+          els.chResolved.hidden = true;
+        }
       } else {
         els.dDest.textContent = 'Discord webhook';
       }
@@ -798,11 +962,17 @@ At:     08 Jul 2026, 05:31 PM</div>
       els.fieldsTg.hidden = !tg;
       els.fieldsDc.hidden = tg;
       els.kind.textContent = tg ? 'Telegram' : 'Discord';
+      els.stepsTg.hidden = !tg;
+      els.stepsDc.hidden = tg;
+      els.guideTitle.textContent = tg
+        ? 'Where the Telegram values come from'
+        : 'Where the webhook URL comes from';
       refresh();
     }
 
     els.tabTg.addEventListener('click', () => selectDest('tg'));
     els.tabDc.addEventListener('click', () => selectDest('dc'));
+    els.ch.addEventListener('input', () => { chVerbatim = false; });
     [els.bot, els.ch, els.webhook, els.filter].forEach((i) => i.addEventListener('input', refresh));
 
     /* ---- find channels from the bot token ----
@@ -837,7 +1007,7 @@ At:     08 Jul 2026, 05:31 PM</div>
       const token = els.bot.value.trim();
       if (!token) { chNote('Enter the bot token above first.', true); return; }
       els.findCh.disabled = true;
-      const label = els.findCh.textContent;
+      const label = els.findCh.innerHTML; // holds the icon too — restore as markup
       els.findCh.textContent = 'Looking…';
       chNote('Reading the bot’s recent chats…', false);
       try {
@@ -854,7 +1024,7 @@ At:     08 Jul 2026, 05:31 PM</div>
         }
         const chats = extractChats(data.result);
         if (!chats.length) {
-          chNote('No channels in the bot’s recent updates. Post a message in the channel (or re-add the bot), then try again — or paste the id manually.', false);
+          chNote('Nothing the bot has seen yet. Add it to the channel first, then post a message there and try again — or paste the id manually.', false);
           return;
         }
         els.chResults.hidden = false;
@@ -867,6 +1037,7 @@ At:     08 Jul 2026, 05:31 PM</div>
           b.querySelector('.cid').textContent = c.id + ' · ' + c.type;
           b.addEventListener('click', () => {
             els.ch.value = String(c.id);
+            chVerbatim = true;
             els.chResults.hidden = true;
             refresh();
           });
@@ -876,7 +1047,7 @@ At:     08 Jul 2026, 05:31 PM</div>
         chNote('Could not reach Telegram — check the token and your connection.', true);
       } finally {
         els.findCh.disabled = false;
-        els.findCh.textContent = label;
+        els.findCh.innerHTML = label;
       }
     }
     els.findCh.addEventListener('click', findChannels);
